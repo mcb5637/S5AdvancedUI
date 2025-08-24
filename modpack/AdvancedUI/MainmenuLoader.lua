@@ -78,25 +78,27 @@ function MainmenuMaps.Filter(filter)
 	if not filter then
 		filter = ""
 	end
+	---@type MapListMap[]
+	local l
 	if filter ~= "" then
 		filter = string.lower(filter)
-		MapList.MapTable = {}
-		for _, m in ipairs(MapList.MapTableRaw) do
-			if string.find(string.lower(MapList.MinimizeName(m.MapNameString)), filter, 1, true) then
-				table.insert(MapList.MapTable, m)
+		l = {}
+		for _, m in ipairs(MapList.MapTable) do
+			if string.find(m.MinimizedName, filter, 1, true) then
+				table.insert(l, m)
 			end
 		end
 	else
-		MapList.MapTable = MapList.MapTableRaw
+		l = MapList.MapTable
 	end
 
 	local selnew = nil
-	for _,m in ipairs(MapList.MapTable) do
+	for _,m in ipairs(l) do
 		if m == sel then
 			selnew = sel
 		end
 	end
-	MainmenuMaps.StartMapScroll:SetDataToScrollOver(MapList.MapTable)
+	MainmenuMaps.StartMapScroll:SetDataToScrollOver(l)
 	MainmenuMaps.StartMapScroll:SetSelected(selnew, true)
 	XGUIEng.ShowWidget("SPM20_FilterClear", filter == "" and 0 or 1)
 end

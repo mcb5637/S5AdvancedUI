@@ -11,19 +11,7 @@ function MapList.Sort(_left, _right)
 	if not _left.IsMP and _right.IsMP then
 		return true
 	end
-	local stringLeft
-	if _left.MapNameString ~= nil and _left.MapNameString ~= "" then
-		stringLeft = string.lower(_left.MapNameString)
-	else
-		stringLeft = string.lower(_left.Name)
-	end
-	local stringRight
-	if _right.MapNameString ~= nil and _right.MapNameString ~= "" then
-		stringRight = string.lower(_right.MapNameString)
-	else
-		stringRight = string.lower(_right.Name)
-	end
-	return MapList.MinimizeName(stringLeft) < MapList.MinimizeName(stringRight)
+	return _left.MinimizedName < _right.MinimizedName
 end
 
 function MapList.Init()
@@ -33,8 +21,6 @@ function MapList.Init()
 	MapList.AddMaps(MapList.MapTable, 3) -- usermaps
 	MapList.AddMaps(MapList.MapTable, 2) -- Add multi player maps
 	table.sort(MapList.MapTable, MapList.Sort)
-	---@type MapListMap[]
-	MapList.MapTableRaw = MapList.MapTable
 end
 
 ---@param _MapHandler MapListMap[]
@@ -52,6 +38,11 @@ function MapList.AddMaps(_MapHandler, _MapType, _CampaignName)
 		local MapNameNumber, MapName = Framework.GetMapNames(i, 1, _MapType, _CampaignName)
 		local MultiplayerMap = Framework.GetMapMultiplayerInformation(MapName, _MapType, _CampaignName) == 1
 		local MapNameString, MapDescString = Framework.GetMapNameAndDescription(MapName, _MapType, _CampaignName)
+		local mini = MapNameString
+		if not mini or mini == "" then
+			mini = MapName
+		end
+		mini = MapList.MinimizeName(string.lower(MapNameString))
 		---@class MapListMap
 		---@field Name string
 		---@field Type number
@@ -59,6 +50,7 @@ function MapList.AddMaps(_MapHandler, _MapType, _CampaignName)
 		---@field MapNameString string
 		---@field MapDescString string
 		---@field IsMP boolean
+		---@field MinimizedName string
 		local map = {
 			Name = MapName,
 			Type = _MapType,
@@ -66,6 +58,7 @@ function MapList.AddMaps(_MapHandler, _MapType, _CampaignName)
 			MapNameString = MapNameString,
 			MapDescString = MapDescString,
 			IsMP = MultiplayerMap,
+			MinimizedName = mini
 		}
 		table.insert(_MapHandler, map)
 	end
