@@ -1,5 +1,8 @@
 SaveList = {}
 
+---@param _left MapListSave
+---@param _right MapListSave
+---@return boolean
 function SaveList.Sort(_left, _right)
 	if _right.Save == "quicksave" then --quicksave top
 		return false
@@ -26,6 +29,8 @@ function SaveList.Sort(_left, _right)
 	return _left.Save < _right.Save
 end
 
+---@param _string string
+---@return string
 function SaveList.MinimizeName(_string)
 	_string = string.gsub(
 		string.gsub(string.gsub(string.gsub(_string, "@color:%d+,%d+,%d+,%d+", ""), "@color:%d+,%d+,%d+", ""), " +", " "),
@@ -40,6 +45,7 @@ function SaveList.MinimizeName(_string)
 end
 
 function SaveList.Init()
+	---@type MapListSave[]
 	SaveList.SaveGameTable = {}
 	local index = 0
 	while true do
