@@ -1,0 +1,87 @@
+---@diagnostic disable: duplicate-set-field
+MapList = { LastFilter = "" }
+
+---@param _left MapListMap
+---@param _right MapListMap
+---@return boolean
+function MapList.Sort(_left, _right)
+	if _left.IsMP and not _right.IsMP then
+		return false
+	end
+	if not _left.IsMP and _right.IsMP then
+		return true
+	end
+	local stringLeft
+	if _left.MapNameString ~= nil and _left.MapNameString ~= "" then
+		stringLeft = string.lower(_left.MapNameString)
+	else
+		stringLeft = string.lower(_left.Name)
+	end
+	local stringRight
+	if _right.MapNameString ~= nil and _right.MapNameString ~= "" then
+		stringRight = string.lower(_right.MapNameString)
+	else
+		stringRight = string.lower(_right.Name)
+	end
+	return MapList.MinimizeName(stringLeft) < MapList.MinimizeName(stringRight)
+end
+
+function MapList.Init()
+	---@type MapListMap[]
+	MapList.MapTable = {}
+	MapList.AddMaps(MapList.MapTable, 0) -- Add singleplayer maps
+	MapList.AddMaps(MapList.MapTable, 3) -- usermaps
+	MapList.AddMaps(MapList.MapTable, 2) -- Add multi player maps
+	table.sort(MapList.MapTable, MapList.Sort)
+	---@type MapListMap[]
+	MapList.MapTableRaw = MapList.MapTable
+end
+
+---@param _MapHandler MapListMap[]
+---@param _MapType number
+---@param _CampaignName string?
+function MapList.AddMaps(_MapHandler, _MapType, _CampaignName)
+	if _CampaignName == nil then
+		_CampaignName = ""
+	end
+	local NumberOfMaps = Framework.GetNumberOfMaps(_MapType, _CampaignName)
+	if NumberOfMaps == 0 then
+		return
+	end
+	for i = 0, NumberOfMaps - 1 do
+		local MapNameNumber, MapName = Framework.GetMapNames(i, 1, _MapType, _CampaignName)
+		local MultiplayerMap = Framework.GetMapMultiplayerInformation(MapName, _MapType, _CampaignName) == 1
+		local MapNameString, MapDescString = Framework.GetMapNameAndDescription(MapName, _MapType, _CampaignName)
+		---@class MapListMap
+		---@field Name string
+		---@field Type number
+		---@field CampaignIndex string
+		---@field MapNameString string
+		---@field MapDescString string
+		---@field IsMP boolean
+		local map = {
+			Name = MapName,
+			Type = _MapType,
+			CampaignIndex = _CampaignName,
+			MapNameString = MapNameString,
+			MapDescString = MapDescString,
+			IsMP = MultiplayerMap,
+		}
+		table.insert(_MapHandler, map)
+	end
+end
+
+---@param _string string
+---@return string
+function MapList.MinimizeName(_string)
+	_string = string.gsub(
+		string.gsub(string.gsub(string.gsub(_string, "@color:%d+,%d+,%d+,%d+", ""), "@color:%d+,%d+,%d+", ""), "  ",
+			" "), "\"", "")
+	while string.sub(_string, 1, 1) == " " do
+		_string = string.sub(_string, 2)
+	end
+	while string.sub(_string, string.len(_string)) == " " do
+		_string = string.sub(_string, 1, string.len(_string) - 1)
+	end
+	return _string
+end
