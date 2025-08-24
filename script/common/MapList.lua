@@ -1,5 +1,4 @@
----@diagnostic disable: duplicate-set-field
-MapList = { LastFilter = "" }
+MapList = {}
 
 ---@param _left MapListMap
 ---@param _right MapListMap
