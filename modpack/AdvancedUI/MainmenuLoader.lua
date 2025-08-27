@@ -134,7 +134,7 @@ function MainmenuMaps.OverrideFuncs()
 				day = d
 				hour = h
 				min = m
-				sec = s
+				sec = se
 				save = s
 			end
 		end
@@ -155,65 +155,17 @@ function MainmenuMaps.OverrideFuncs()
 	end
 end
 
+---@param filter string?
 function MainmenuMaps.Filter(filter)
-	---@type MapListMap?
-	local sel = MainmenuMaps.StartMapScroll:GetSelected()
-	if not filter then
-		filter = ""
-	end
-	---@type MapListMap[]
-	local l
-	if filter ~= "" then
-		filter = string.lower(filter)
-		l = {}
-		for _, m in ipairs(MapList.MapTable) do
-			if string.find(m.MinimizedName, filter, 1, true) then
-				table.insert(l, m)
-			end
-		end
-	else
-		l = MapList.MapTable
-	end
-
-	local selnew = nil
-	for _,m in ipairs(l) do
-		if m == sel then
-			selnew = sel
-		end
-	end
-	MainmenuMaps.StartMapScroll:SetDataToScrollOver(l)
-	MainmenuMaps.StartMapScroll:SetSelected(selnew, true)
+	local l = MapList.ApplyFilter(filter)
+	MainmenuMaps.StartMapScroll:SetDataToScrollOver(l, true, true)
 	XGUIEng.ShowWidget("SPM20_FilterClear", filter == "" and 0 or 1)
 end
 
+---@param filter string?
 function MainmenuSaves.Filter(filter)
-	---@type MapListSave?
-	local sel = MainmenuSaves.LoadSaveScroll:GetSelected()
-	if not filter then
-		filter = ""
-	end
-	---@type MapListSave[]
-	local l
-	if filter ~= "" then
-		filter = string.lower(filter)
-		l = {}
-		for _, m in ipairs(SaveList.SaveGameTable) do
-			if string.find(m.MinimizedName, filter, 1, true) then
-				table.insert(l, m)
-			end
-		end
-	else
-		l = SaveList.SaveGameTable
-	end
-
-	local selnew = nil
-	for _,m in ipairs(l) do
-		if m == sel then
-			selnew = sel
-		end
-	end
-	MainmenuSaves.LoadSaveScroll:SetDataToScrollOver(l)
-	MainmenuSaves.LoadSaveScroll:SetSelected(selnew, true)
+	local l = SaveList.ApplyFilter(filter)
+	MainmenuSaves.LoadSaveScroll:SetDataToScrollOver(l, true, true)
 	XGUIEng.ShowWidget("SPM30_FilterClear", filter == "" and 0 or 1)
 end
 

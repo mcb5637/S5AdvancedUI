@@ -44,21 +44,90 @@ function SaveList.MinimizeName(_string)
 	return _string
 end
 
+---@return MapListSave[] invalid
 function SaveList.Init()
 	---@type MapListSave[]
 	SaveList.SaveGameTable = {}
+	---@type MapListSave[]
+	local invalid = {}
 	local index = 0
 	while true do
-		local num, SaveGameName = Framework.GetSaveGameNames(index, 1)
+		local num, slot = Framework.GetSaveGameNames(index, 1)
 		if num == 0 then
 			break
 		end
 		index = index + 1
-		if Framework.IsSaveGameValid(SaveGameName) then
-			table.insert(SaveList.SaveGameTable, SaveList.MakeSave(SaveGameName))
+		if Framework.IsSaveGameValid(slot) then
+			table.insert(SaveList.SaveGameTable, SaveList.MakeSave(slot))
+		else
+			local _, _, slotnum = string.find(slot, "save_(%d+)$")
+			local sn = nil
+			if slotnum then
+				sn = tonumber(slotnum)
+			end
+			local n = Framework.GetSaveGameString(slot)
+			if not n or n == "" then
+				n = "@color:255,0,0|invalid"
+			else
+				n = "@color:255,0,0|invalid@color:255,255,255 - "..n
+			end
+			---@type MapListSave
+			local s = {
+				Name = "",
+				Type = -5,
+				CampaignIndex = "",
+				MapNameString = "",
+				MapDescString = "",
+				IsMP = false,
+				Save = slot,
+				Desc = n,
+				GUID = "",
+				MinimizedName = "",
+				SlotNumber = sn,
+			}
+			table.insert(invalid, s)
 		end
 	end
-	table.sort(LoadSaveGame.SaveGameTable, LoadSaveGame.Sort)
+	table.sort(SaveList.SaveGameTable, SaveList.Sort)
+	return invalid
+end
+
+---@param minNum number
+function SaveList.InitCreate(minNum)
+	local invalid = SaveList.Init()
+	---@type MapListSave[]
+	SaveList.SaveGameCreateTable = {}
+	local maxSlot = 0
+	for _,s in ipairs(SaveList.SaveGameTable) do
+		if s.SlotNumber then
+			SaveList.SaveGameCreateTable[s.SlotNumber] = s
+			maxSlot = math.max(s.SlotNumber, maxSlot) or 0
+		end
+	end
+	for _,s in ipairs(invalid) do
+		if s.SlotNumber then
+			SaveList.SaveGameCreateTable[s.SlotNumber] = s
+			maxSlot = math.max(s.SlotNumber, maxSlot) or 0
+		end
+	end
+	maxSlot = math.max(maxSlot + 5, minNum)
+	for i=1,maxSlot do
+		if not SaveList.SaveGameCreateTable[i] then
+			SaveList.SaveGameCreateTable[i] = {
+				Name = "",
+				Type = -5,
+				CampaignIndex = "",
+				MapNameString = "",
+				MapDescString = "",
+				IsMP = false,
+				Save = "save_"..i,
+				Desc = XGUIEng.GetStringTableText("IngameMenu/SaveGame_EmptySlot"),
+				GUID = "",
+				MinimizedName = "",
+				SlotNumber = i,
+			}
+		end
+	end
 end
 
 ---@param slot string
@@ -68,10 +137,16 @@ function SaveList.MakeSave(slot)
 	local MapNameString, MapDescString = Framework.GetMapNameAndDescription(mapname, typ, cname)
 	local mp = Framework.GetMapMultiplayerInformation(mapname, typ, cname) == 1
 	local desc = Framework.GetSaveGameString(slot) or "invalid"
+	local _, _, slotnum = string.find(slot, "save_(%d+)$")
+	local sn = nil
+	if slotnum then
+		sn = tonumber(slotnum)
+	end
 	---@class MapListSave : MapListMap
 	---@field Save string
 	---@field Desc string
 	---@field GUID string
+	---@field SlotNumber number?
 	local s = {
 		Name = mapname,
 		Type = typ,
@@ -83,6 +158,7 @@ function SaveList.MakeSave(slot)
 		Desc = desc,
 		GUID = guid,
 		MinimizedName = SaveList.MinimizeName(string.lower(desc)),
+		SlotNumber = sn,
 	}
 	return s
 end
@@ -101,4 +177,26 @@ function SaveList.ParseSaveDate(save)
 	else
 		return 0, 0, 0, 0, 0, 0
 	end
+end
+
+---@param filter string?
+---@return MapListSave[]
+function SaveList.ApplyFilter(filter)
+	if not filter then
+		filter = ""
+	end
+	---@type MapListSave[]
+	local l
+	if filter ~= "" then
+		filter = string.lower(filter)
+		l = {}
+		for _, m in ipairs(SaveList.SaveGameTable) do
+			if string.find(m.MinimizedName, filter, 1, true) then
+				table.insert(l, m)
+			end
+		end
+	else
+		l = SaveList.SaveGameTable
+	end
+	return l
 end

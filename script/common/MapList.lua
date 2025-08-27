@@ -77,3 +77,25 @@ function MapList.MinimizeName(_string)
 	end
 	return _string
 end
+
+---@param filter string?
+---@return MapListMap[]
+function MapList.ApplyFilter(filter)
+	if not filter then
+		filter = ""
+	end
+	---@type MapListMap[]
+	local l
+	if filter ~= "" then
+		filter = string.lower(filter)
+		l = {}
+		for _, m in ipairs(MapList.MapTable) do
+			if string.find(m.MinimizedName, filter, 1, true) then
+				table.insert(l, m)
+			end
+		end
+	else
+		l = MapList.MapTable
+	end
+	return l
+end
