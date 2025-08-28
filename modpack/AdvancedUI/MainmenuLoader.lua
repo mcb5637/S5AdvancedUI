@@ -169,6 +169,7 @@ function MainmenuSaves.Filter(filter)
 	XGUIEng.ShowWidget("SPM30_FilterClear", filter == "" and 0 or 1)
 end
 
+ModLoader.LoadSTTOverride("AdvancedUI")
 table.insert(ModLoaderMainmenu.InitUICallbacks, function()
 	MainmenuMaps.OverrideFuncs()
 	local function rem(w)

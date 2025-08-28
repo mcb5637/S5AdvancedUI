@@ -60,32 +60,7 @@ function SaveList.Init()
 		if Framework.IsSaveGameValid(slot) then
 			table.insert(SaveList.SaveGameTable, SaveList.MakeSave(slot))
 		else
-			local _, _, slotnum = string.find(slot, "save_(%d+)$")
-			local sn = nil
-			if slotnum then
-				sn = tonumber(slotnum)
-			end
-			local n = Framework.GetSaveGameString(slot)
-			if not n or n == "" then
-				n = "@color:255,0,0|invalid"
-			else
-				n = "@color:255,0,0|invalid@color:255,255,255 - "..n
-			end
-			---@type MapListSave
-			local s = {
-				Name = "",
-				Type = -5,
-				CampaignIndex = "",
-				MapNameString = "",
-				MapDescString = "",
-				IsMP = false,
-				Save = slot,
-				Desc = n,
-				GUID = "",
-				MinimizedName = "",
-				SlotNumber = sn,
-			}
-			table.insert(invalid, s)
+			table.insert(invalid, SaveList.MakeInvalidSave(slot))
 		end
 	end
 	table.sort(SaveList.SaveGameTable, SaveList.Sort)
@@ -137,11 +112,7 @@ function SaveList.MakeSave(slot)
 	local MapNameString, MapDescString = Framework.GetMapNameAndDescription(mapname, typ, cname)
 	local mp = Framework.GetMapMultiplayerInformation(mapname, typ, cname) == 1
 	local desc = Framework.GetSaveGameString(slot) or "invalid"
-	local _, _, slotnum = string.find(slot, "save_(%d+)$")
-	local sn = nil
-	if slotnum then
-		sn = tonumber(slotnum)
-	end
+	local sn = SaveList.TryParseSlotNum(slot)
 	---@class MapListSave : MapListMap
 	---@field Save string
 	---@field Desc string
@@ -161,6 +132,44 @@ function SaveList.MakeSave(slot)
 		SlotNumber = sn,
 	}
 	return s
+end
+
+---@param slot string
+---@return MapListSave
+function SaveList.MakeInvalidSave(slot)
+	local sn = SaveList.TryParseSlotNum(slot)
+	local n = Framework.GetSaveGameString(slot)
+	if not n or n == "" then
+		n = XGUIEng.GetStringTableText("AdvancedUI/invalid_saveslot_empty")
+	else
+		n = XGUIEng.GetStringTableText("AdvancedUI/invalid_saveslot_name").." - "..n
+	end
+	---@type MapListSave
+	local s = {
+		Name = "",
+		Type = -5,
+		CampaignIndex = "",
+		MapNameString = "",
+		MapDescString = "",
+		IsMP = false,
+		Save = slot,
+		Desc = n,
+		GUID = "",
+		MinimizedName = "",
+		SlotNumber = sn,
+	}
+	return s
+end
+
+---@param slot string
+---@return number?
+function SaveList.TryParseSlotNum(slot)
+	local _, _, slotnum = string.find(slot, "save_(%d+)$")
+	local sn = nil
+	if slotnum then
+		sn = tonumber(slotnum)
+	end
+	return sn
 end
 
 ---@param save MapListSave

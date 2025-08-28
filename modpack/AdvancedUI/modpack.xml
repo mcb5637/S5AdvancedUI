@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/mcb5637/s5xmlschema/master/modpack.xsd">
-	<LoaderPath></LoaderPath>
+	<LoaderPath>Data/ModPack/AdvancedUI/ModPackLoader.lua</LoaderPath>
 	<ScriptPath>Data/ModPack/AdvancedUI/ScriptLoader.lua</ScriptPath>
 	<MainmenuPath>Data/ModPack/AdvancedUI/MainmenuLoader.lua</MainmenuPath>
 	<Version>1.0.0</Version>
 	<Description>Advanced UI</Description>
-	<DataMod>false</DataMod>
+	<DataMod>true</DataMod>
 	<ScriptMod>true</ScriptMod>
 	<MainmenuMod>true</MainmenuMod>
 	<ScriptLib>false</ScriptLib>
