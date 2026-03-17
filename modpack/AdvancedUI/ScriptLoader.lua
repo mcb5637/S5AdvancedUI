@@ -1,6 +1,8 @@
 Script.Load("Data\\Script\\Common\\MapList.lua")
 Script.Load("Data\\Script\\Common\\SaveList.lua")
-Script.Load("Data\\Script\\InterfaceTools\\AutoScroll.lua")
+if not AutoScroll then
+	Script.Load("Data\\Script\\InterfaceTools\\AutoScroll.lua")
+end
 
 AdvancedUI = {}
 
@@ -112,6 +114,119 @@ function AdvancedUI.FilterLoad(filter)
 	local l = SaveList.ApplyFilter(filter)
 	AdvancedUI.LoadSaveScroll:SetDataToScrollOver(l)
 	XGUIEng.ShowWidget("MainMenuLoad_FilterClear", filter == "" and 0 or 1)
+end
+
+function AdvancedUI.OnMarketInputChanged(txt, widget)
+	local rt = XGUIEng.GetBaseWidgetUserVariable(widget, 0)
+	local num = tonumber(txt)
+	if not num then
+		return
+	end
+	if rt == ResourceType.Gold then
+		gvGUI.MarketMoneyToBuy = num
+	elseif rt == ResourceType.Wood then
+		gvGUI.MarketWoodToBuy = num
+	elseif rt == ResourceType.Clay then
+		gvGUI.MarketClayToBuy = num
+	elseif rt == ResourceType.Stone then
+		gvGUI.MarketStoneToBuy = num
+	elseif rt == ResourceType.Iron then
+		gvGUI.MarketIronToBuy = num
+	elseif rt == ResourceType.Sulfur then
+		gvGUI.MarketSulfurToBuy = num
+	end
+end
+
+function AdvancedUI.RewriteInputs()
+	CppLogic.UI.TextInputCustomWidgetSetText("Trade_Market_MoneyAmount", tostring(gvGUI.MarketMoneyToBuy))
+	CppLogic.UI.TextInputCustomWidgetSetText("Trade_Market_WoodAmount", tostring(gvGUI.MarketWoodToBuy))
+	CppLogic.UI.TextInputCustomWidgetSetText("Trade_Market_ClayAmount", tostring(gvGUI.MarketClayToBuy))
+	CppLogic.UI.TextInputCustomWidgetSetText("Trade_Market_StoneAmount", tostring(gvGUI.MarketStoneToBuy))
+	CppLogic.UI.TextInputCustomWidgetSetText("Trade_Market_IronAmount", tostring(gvGUI.MarketIronToBuy))
+	CppLogic.UI.TextInputCustomWidgetSetText("Trade_Market_SulfurAmount", tostring(gvGUI.MarketSulfurToBuy))
+end
+
+function AdvancedUI.InitMarketUI()
+	for _, d in ipairs{
+		{
+			Name = "Trade_Market_MoneyAmount",
+			ResourceType = ResourceType.Gold,
+			Parent = "Trade_Market_BuyMoney",
+			Before = "Trade_BG_Money",
+			Add = "Trade_Market_IncreaseMoney",
+			Sub = "Trade_Market_DecreaseMoney",
+		},
+		{
+			Name = "Trade_Market_ClayAmount",
+			ResourceType = ResourceType.Clay,
+			Parent = "Trade_Market_BuyClay",
+			Before = "Trade_BG_Clay",
+			Add = "Trade_Market_IncreaseClay",
+			Sub = "Trade_Market_DecreaseClay",
+		},
+		{
+			Name = "Trade_Market_WoodAmount",
+			ResourceType = ResourceType.Wood,
+			Parent = "Trade_Market_BuyWood",
+			Before = "Trade_BG_Wood",
+			Add = "Trade_Market_IncreaseWood",
+			Sub = "Trade_Market_DecreaseWood",
+		},
+		{
+			Name = "Trade_Market_StoneAmount",
+			ResourceType = ResourceType.Stone,
+			Parent = "Trade_Market_BuyStone",
+			Before = "Trade_BG_Stone",
+			Add = "Trade_Market_IncreaseStone",
+			Sub = "Trade_Market_DecreaseStone",
+		},
+		{
+			Name = "Trade_Market_IronAmount",
+			ResourceType = ResourceType.Iron,
+			Parent = "Trade_Market_BuyIron",
+			Before = "Trade_BG_Iron",
+			Add = "Trade_Market_IncreaseIron",
+			Sub = "Trade_Market_DecreaseIron",
+		},
+		{
+			Name = "Trade_Market_SulfurAmount",
+			ResourceType = ResourceType.Sulfur,
+			Parent = "Trade_Market_BuySulfur",
+			Before = "Trade_BG_Sulfur",
+			Add = "Trade_Market_IncreaseSulfur",
+			Sub = "Trade_Market_DecreaseSulfur",
+		}
+	} do
+		local x, y, w, h = CppLogic.UI.WidgetGetPositionAndSize(d.Name)
+		CppLogic.UI.RemoveWidget(d.Name)
+
+		assert(XGUIEng.GetWidgetID(d.Name)==0, "Trade_Market_MoneyAmount already exists")
+		CppLogic.UI.ContainerWidgetCreateCustomWidgetChild(d.Parent, d.Name, "CppLogic::Mod::UI::TextInputCustomWidget", d.Before, 4, 0, -1, 0, 0, 100, "AdvancedUI.OnMarketInputChanged", "data\\menu\\fonts\\standard10.met")
+		CppLogic.UI.WidgetSetPositionAndSize(d.Name, x, y, w, h)
+		XGUIEng.ShowWidget(d.Name, 1)
+		CppLogic.UI.WidgetSetBaseData(d.Name, 0, false, false)
+
+		XGUIEng.SetBaseWidgetUserVariable(d.Name, 0, d.ResourceType)
+
+		local stra = CppLogic.UI.ButtonGetActionFunc(d.Add)
+		local fadd = CppLogic.API.Eval(stra)
+		CppLogic.UI.ButtonOverrideActionFunc(d.Add, function()
+			fadd()
+			AdvancedUI.RewriteInputs()
+		end)
+		local strs = CppLogic.UI.ButtonGetActionFunc(d.Sub)
+		local fsub = CppLogic.API.Eval(strs)
+		CppLogic.UI.ButtonOverrideActionFunc(d.Sub, function()
+			fsub()
+			AdvancedUI.RewriteInputs()
+		end)
+	end
+
+	AdvancedUI.GUIAction_MarketClearDeals = GUIAction_MarketClearDeals
+	function GUIAction_MarketClearDeals()
+		AdvancedUI.GUIAction_MarketClearDeals()
+		AdvancedUI.RewriteInputs()
+	end
 end
 
 function AdvancedUI.InitUI()
@@ -476,6 +591,8 @@ function AdvancedUI.InitUI()
 
 	AdvancedUI.DoSaveScroll:Setup()
 	AdvancedUI.LoadSaveScroll:Setup()
+
+	AdvancedUI.InitMarketUI()
 end
 
 CppLogic.API.EnableScriptTriggerEval(true)
