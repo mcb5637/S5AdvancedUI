@@ -226,6 +226,12 @@ function AdvancedUI.InitMarketUI()
 	function GUIAction_MarketClearDeals()
 		AdvancedUI.GUIAction_MarketClearDeals()
 		AdvancedUI.RewriteInputs()
+		CppLogic.UI.InputCustomWidgetSetFocus("Trade_Market_MoneyAmount", false)
+		CppLogic.UI.InputCustomWidgetSetFocus("Trade_Market_WoodAmount", false)
+		CppLogic.UI.InputCustomWidgetSetFocus("Trade_Market_ClayAmount", false)
+		CppLogic.UI.InputCustomWidgetSetFocus("Trade_Market_StoneAmount", false)
+		CppLogic.UI.InputCustomWidgetSetFocus("Trade_Market_IronAmount", false)
+		CppLogic.UI.InputCustomWidgetSetFocus("Trade_Market_SulfurAmount", false)
 	end
 end
 
