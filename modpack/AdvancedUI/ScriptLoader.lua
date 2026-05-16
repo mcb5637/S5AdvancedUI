@@ -789,12 +789,13 @@ function AdvancedUI.InitUI()
 	CppLogic.UI.WidgetSetUpdateManualFlag("MultiSelection_button", false)
 	CppLogic.UI.WidgetOverrideUpdateFunc("MultiSelection_button", function() AdvancedUI.GUIUpdate_MultiSelectionButton() end)
 	CppLogic.UI.ContainerWidgetCreateCustomWidgetChild("MultiSelectionContainer", "MultiSelectionScroll", "CppLogic::Mod::UI::AutoScrollCustomWidget", nil, 4, 0, 0, 0, 0, 0, "",
-		"MultiSelectionEntity")
-	CppLogic.UI.WidgetSetPositionAndSize("MultiSelectionScroll", 0, 0, 40, 500)
+													   "MultiSelectionEntity")
+	CppLogic.UI.WidgetSetPositionAndSize("MultiSelectionScroll", 0, 0, 40, 450)
 	XGUIEng.ShowWidget("MultiSelectionScroll", 1)
 	CppLogic.UI.WidgetSetBaseData("MultiSelectionScroll", 0, false, false)
 
 	CppLogic.UI.WidgetSetBaseData("MultiSelectionContainer", 0, true, false)
+	CppLogic.UI.WidgetSetPositionAndSize("MultiSelectionContainer", 984, 99, 40, 450)
 
 	AdvancedUI.DoSaveScroll:Setup()
 	AdvancedUI.LoadSaveScroll:Setup()
