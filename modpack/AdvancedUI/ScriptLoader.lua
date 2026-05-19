@@ -226,6 +226,9 @@ function AdvancedUI.InitMarketUI()
 		end)
 	end
 
+end
+
+function AdvancedUI.InitMarketOverrides()
 	AdvancedUI.GUIAction_MarketClearDeals = GUIAction_MarketClearDeals
 	function GUIAction_MarketClearDeals()
 		AdvancedUI.GUIAction_MarketClearDeals()
@@ -338,15 +341,23 @@ function AdvancedUI.GUIAction_MultiSelectionSelectUnit()
 	end
 end
 
-function AdvancedUI.GUIUpate_MultiSelectionHealthBar()
-	local w = XGUIEng.GetCurrentWidgetID()
-	local id = AdvancedUI.MultiselectionScroll:GetElementOf(w, 1)
-	if not id then
-		return
-	end
+function AdvancedUI.ShowExtendedInfo()
+	return XGUIEng.IsModifierPressed(Keys.ModifierControl) == 1
+end
 
+---@param id number
+---@return number thp
+---@return number tmax
+---@return number hp
+---@return number max
+---@return boolean leader
+function AdvancedUI.GetHealthBar(id)
 	local hp = Logic.GetEntityHealth(id)
 	local max = Logic.GetEntityMaxHealth(id)
+
+	local thp = hp
+	local tmax = max
+	local l = false
 
 	if Logic.IsEntityInCategory(id, EntityCategories.Leader) == 1 then
 		local maxSol = Logic.LeaderGetMaxNumberOfSoldiers(id)
@@ -357,10 +368,23 @@ function AdvancedUI.GUIUpate_MultiSelectionHealthBar()
 				shp = Logic.LeaderGetNumberOfSoldiers(id) * perSol
 			end
 
-			hp = hp + shp
-			max = max + (maxSol * perSol)
+			thp = thp + shp
+			tmax = tmax + (maxSol * perSol)
+			l = true
 		end
 	end
+
+	return thp, tmax, hp, max, l
+end
+
+function AdvancedUI.GUIUpate_MultiSelectionHealthBar()
+	local w = XGUIEng.GetCurrentWidgetID()
+	local id = AdvancedUI.MultiselectionScroll:GetElementOf(w, 1)
+	if not id then
+		return
+	end
+
+	local hp, max = AdvancedUI.GetHealthBar(id)
 
 	local r, g, b = GUI.GetPlayerColor(Logic.EntityGetPlayer(id))
 	XGUIEng.SetMaterialColor(w, 0, r, g, b, 255)
@@ -368,8 +392,224 @@ function AdvancedUI.GUIUpate_MultiSelectionHealthBar()
 	XGUIEng.SetProgressBarValues(w, hp, max)
 end
 
+function AdvancedUI.GUIUpate_DetailsHealthBar()
+	local w = XGUIEng.GetCurrentWidgetID()
+	local id = GUI.GetSelectedEntity()
+	if id == nil then
+		return
+	end
+	local r, g, b = GUI.GetPlayerColor(GUI.GetPlayerID())
+	XGUIEng.SetMaterialColor(w, 0, r, g, b, 170)
+	local thp, tmax, hp, max = AdvancedUI.GetHealthBar(id)
+	if AdvancedUI.ShowExtendedInfo() then
+		hp = thp
+		max = tmax
+	end
+	XGUIEng.SetProgressBarValues(w, hp, max)
+end
+
+function AdvancedUI.GUIUpdate_DetailsHealthPoints()
+	local w = XGUIEng.GetCurrentWidgetID()
+	local id = GUI.GetSelectedEntity()
+	if id == nil then
+		return
+	end
+	local thp, tmax, hp, max = AdvancedUI.GetHealthBar(id)
+	if AdvancedUI.ShowExtendedInfo() then
+		hp = thp
+		max = tmax
+	end
+	local s = "@center "..hp.."/"..max
+	XGUIEng.SetText(w, s)
+end
+
+AdvancedUI.ExtractTitleBuffer = {}
+---@param s string
+---@return string
+function AdvancedUI.ExtractTitle(s)
+	if AdvancedUI.ExtractTitleBuffer[s] then
+		return AdvancedUI.ExtractTitleBuffer[s]
+	end
+	local _, _, title = string.find(XGUIEng.GetStringTableText(s), "(@color:180,180,180.*@color:255,255,255)")
+	title = title.." "
+	AdvancedUI.ExtractTitleBuffer[s] = title
+	return title
+end
+
+function AdvancedUI.GUITooltip_DetailsHealthBar()
+	if AdvancedUI.ShowExtendedInfo() then
+		XGUIEng.SetText("TooltipBottomShortCut", "")
+		XGUIEng.SetText("TooltipBottomCosts", "")
+		local txt = AdvancedUI.ExtractTitle("MenuSelectionGeneric/health")
+		local id = GUI.GetSelectedEntity()
+		if id then
+			local thp, tmax, hp, max, l = AdvancedUI.GetHealthBar(id)
+			txt = txt..XGUIEng.GetStringTableText("AdvancedUI/hp")..hp.."/"..max
+			if l then
+				txt = txt.."@cr|"..XGUIEng.GetStringTableText("AdvancedUI/hp_troop")..thp.."/"..tmax
+			end
+		end
+		XGUIEng.SetText("TooltipBottomText", txt)
+	else
+		GUITooltip_Generic("MenuSelectionGeneric/health")
+	end
+end
+
+function AdvancedUI.GetName(id, t)
+	local n = ""
+	for k, v in pairs(t) do
+		if v == id then
+			n = k
+			break
+		end
+	end
+	local x = XGUIEng.GetStringTableText("Names/"..n)
+	return x or n
+end
+
+function AdvancedUI.GUITooltip_Armor()
+	local id = GUI.GetSelectedEntity()
+	if AdvancedUI.ShowExtendedInfo() and id and (Logic.IsBuilding(id) == 1 or Logic.IsSettler(id) == 1) then
+		XGUIEng.SetText("TooltipBottomShortCut", "")
+		XGUIEng.SetText("TooltipBottomCosts", "")
+		local txt = AdvancedUI.ExtractTitle("MenuSelectionGeneric/armor")
+		local pl = Logic.EntityGetPlayer(id)
+		local ty = Logic.GetEntityType(id)
+		local base, class = CppLogic.EntityType.GetArmor(ty)
+		local techs = CppLogic.EntityType.GetArmorModifierTechs(ty)
+		txt = txt..XGUIEng.GetStringTableText("AdvancedUI/ac")..AdvancedUI.GetName(class, ArmorClasses).."@cr|"..XGUIEng.GetStringTableText("AdvancedUI/armor")..base
+		for _, t in ipairs(techs) do
+			local op, num = CppLogic.Technology.GetArmorModifier(t)
+			local c = "@color:180,180,180"
+			if Logic.IsTechnologyResearched(pl, t) == 1 then
+				c = "@color:255,255,255"
+			end
+			txt = txt..c.."|@cr|"..AdvancedUI.GetName(t, Technologies)..": "..string.char(op)..num
+		end
+		XGUIEng.SetText("TooltipBottomText", txt)
+	else
+		GUITooltip_Generic("MenuSelectionGeneric/armor")
+	end
+end
+
+function AdvancedUI.GetConditionColor(c)
+	return c and "@color:255,255,255|" or "@color:180,180,180|"
+end
+
+function AdvancedUI.GetColoredTechBoni(pl, t, op, num)
+	return AdvancedUI.GetConditionColor(Logic.IsTechnologyResearched(pl, t) == 1)..AdvancedUI.GetName(t, Technologies)..": "..string.char(op)..num
+end
+
+function AdvancedUI.GUITooltip_Damage()
+	local id = GUI.GetSelectedEntity()
+	local top = Logic.GetFoundationTop(id)
+	if IsValid(top) then
+		id = top
+	end
+	if AdvancedUI.ShowExtendedInfo() and id and (Logic.IsBuilding(id) == 1 or Logic.IsSettler(id) == 1) then
+		XGUIEng.SetText("TooltipBottomShortCut", "")
+		XGUIEng.SetText("TooltipBottomCosts", "")
+		local txt = AdvancedUI.ExtractTitle("MenuSelectionGeneric/damage")
+		local pl = Logic.EntityGetPlayer(id)
+		local ty = Logic.GetEntityType(id)
+		local base, class, rand = CppLogic.EntityType.GetAutoAttackDamage(ty)
+		txt = txt..XGUIEng.GetStringTableText("AdvancedUI/dc")..AdvancedUI.GetName(class, DamageClasses)
+		.."@cr|"..XGUIEng.GetStringTableText("AdvancedUI/damage")..base.."@tab:0.5|"..XGUIEng.GetStringTableText("AdvancedUI/damageRand")..rand
+		if Logic.IsSettler(id) == 1 then
+			local b, r = CppLogic.Entity.Leader.GetLeveledDamageBonus(id)
+			if b and r then
+				if b < 0 then
+					b = 0
+				end
+				txt = txt.."@color:255,255,255|@cr|"..XGUIEng.GetStringTableText("AdvancedUI/level")..(Logic.GetLeaderExperienceLevel(id) + 1)..": +"..b.."@tab:0.5|+"..r
+			end
+			local techs, randomTechs = CppLogic.EntityType.Settler.GetDamageModifierTechs(ty)
+			for i=1,math.max(table.getn(techs), table.getn(randomTechs)) do
+				local t = techs[i]
+				local rt = randomTechs[i]
+				txt = txt.."@cr|"
+				if t then
+					local op, num = CppLogic.Technology.GetDamageModifier(t)
+					txt = txt..AdvancedUI.GetColoredTechBoni(pl, t, op, num)
+				end
+				if rt then
+					local op, num = CppLogic.Technology.GetDamageBonusModifier(rt)
+					txt = txt.."@tab:0.5|"..AdvancedUI.GetColoredTechBoni(pl, rt, op, num)
+				end
+			end
+		end
+		XGUIEng.SetText("TooltipBottomText", txt)
+	else
+		GUITooltip_Generic("MenuSelectionGeneric/damage")
+	end
+end
+
+function AdvancedUI.GUIUpdate_Damage()
+	local id = GUI.GetSelectedEntity()
+	local top = Logic.GetFoundationTop(id)
+	if IsValid(top) then
+		id = top
+	end
+	if AdvancedUI.ShowExtendedInfo() and id and Logic.IsSettler(id) == 1 then
+		local d = Logic.GetEntityDamage(id)
+		if not d then
+			d = 0
+		end
+		local r = CppLogic.Entity.Settler.GetRandomDamageBonus(id)
+		XGUIEng.SetText(XGUIEng.GetCurrentWidgetID(), "@ra|"..d.."+"..r)
+	else
+		GUIUpdate_Damage()
+	end
+end
+
+AdvancedUI.ExperienceBorders = CppLogic.Logic.CalculateExperienceBorders()
+function AdvancedUI.CheckExperienceLevelText(l_v, v, stt, txt)
+	if v == l_v then
+		return txt
+	end
+	return txt.." "..XGUIEng.GetStringTableText(stt).." +"..(v-l_v)
+end
+function AdvancedUI.GUITooltip_Experience()
+	local id = GUI.GetSelectedEntity()
+	local top = Logic.GetFoundationTop(id)
+	if IsValid(top) then
+		id = top
+	end
+	if AdvancedUI.ShowExtendedInfo() and id and Logic.IsLeader(id) == 1 then
+		XGUIEng.SetText("TooltipBottomShortCut", "")
+		XGUIEng.SetText("TooltipBottomCosts", "")
+		local lvl = Logic.GetLeaderExperienceLevel(id)
+		local txt = AdvancedUI.ExtractTitle("MenuSelectionGeneric/Experience")..XGUIEng.GetStringTableText("AdvancedUI/xp")..CppLogic.Entity.Leader.GetExperience(id)
+		if AdvancedUI.ExperienceBorders[lvl+1] then
+			txt = txt.."/"..AdvancedUI.ExperienceBorders[lvl+1]
+		end
+		local ec = CppLogic.Entity.Settler.GetExperienceClass(id)
+		local l_rd, l_auto, l_d, l_dod, l_expl, l_reg, l_rang, l_miss, l_speed = 0,0,0,0,0,0,0,0,0
+		for i=0,4 do
+			local rd, auto, d, dod, expl, reg, rang, miss, speed = CppLogic.Logic.GetExperienceLevelData(ec, i)
+			txt = txt.."@cr|"..AdvancedUI.GetConditionColor(lvl>=i)..XGUIEng.GetStringTableText("AdvancedUI/level")..(i + 1)
+			txt = AdvancedUI.CheckExperienceLevelText(l_d, d, "AdvancedUI/dmg", txt)
+			txt = AdvancedUI.CheckExperienceLevelText(l_rd, rd, "AdvancedUI/rdmg", txt)
+			txt = AdvancedUI.CheckExperienceLevelText(l_rang, rang, "AdvancedUI/rang", txt)
+			txt = AdvancedUI.CheckExperienceLevelText(l_expl, expl, "AdvancedUI/expl", txt)
+			txt = AdvancedUI.CheckExperienceLevelText(l_auto, auto, "AdvancedUI/auto", txt)
+			txt = AdvancedUI.CheckExperienceLevelText(l_reg, reg, "AdvancedUI/reg", txt)
+			txt = AdvancedUI.CheckExperienceLevelText(l_dod, dod, "AdvancedUI/dod", txt)
+			txt = AdvancedUI.CheckExperienceLevelText(-l_miss, -miss, "AdvancedUI/miss", txt)
+			txt = AdvancedUI.CheckExperienceLevelText(l_speed, speed, "AdvancedUI/speed", txt)
+			l_rd, l_auto, l_d, l_dod, l_expl, l_reg, l_rang, l_miss, l_speed = rd, auto, d, dod, expl, reg, rang, miss, speed
+		end
+		XGUIEng.SetText("TooltipBottomText", txt)
+	else
+		GUITooltip_Generic("MenuSelectionGeneric/Experience")
+	end
+end
+
 function AdvancedUI.Init()
 	GUIAction_UpdateMultiSelectionContainer = AdvancedUI.GUIAction_UpdateMultiSelectionContainer
+	GUIUpate_DetailsHealthBar = AdvancedUI.GUIUpate_DetailsHealthBar
+	GUIUpdate_DetailsHealthPoints = AdvancedUI.GUIUpdate_DetailsHealthPoints
+	AdvancedUI.InitMarketOverrides()
 	AdvancedUI.InitUI()
 	return true
 end
@@ -797,11 +1037,19 @@ function AdvancedUI.InitUI()
 	CppLogic.UI.WidgetSetBaseData("MultiSelectionContainer", 0, true, false)
 	CppLogic.UI.WidgetSetPositionAndSize("MultiSelectionContainer", 984, 99, 40, 450)
 
+	CppLogic.UI.WidgetOverrideTooltipFunc("DetailsHealth_Tooltip", AdvancedUI.GUITooltip_DetailsHealthBar)
+	CppLogic.UI.WidgetOverrideTooltipFunc("DetailsArmor_Tooltip", AdvancedUI.GUITooltip_Armor)
+	CppLogic.UI.WidgetOverrideTooltipFunc("DetailsDamage_Tooltip", AdvancedUI.GUITooltip_Damage)
+	CppLogic.UI.WidgetOverrideUpdateFunc("DetailsDamage_Amount", AdvancedUI.GUIUpdate_Damage)
+	CppLogic.UI.WidgetOverrideTooltipFunc("DetailsExperience_Tooltip", AdvancedUI.GUITooltip_Experience)
+
 	AdvancedUI.DoSaveScroll:Setup()
 	AdvancedUI.LoadSaveScroll:Setup()
 	AdvancedUI.MultiselectionScroll:Init()
 
 	AdvancedUI.InitMarketUI()
+
+	AdvancedUI.ExtractTitleBuffer = {}
 end
 
 CppLogic.API.EnableScriptTriggerEval(true)
