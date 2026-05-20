@@ -225,7 +225,6 @@ function AdvancedUI.InitMarketUI()
 			AdvancedUI.RewriteInputs()
 		end)
 	end
-
 end
 
 function AdvancedUI.InitMarketOverrides()
@@ -240,11 +239,84 @@ function AdvancedUI.InitMarketOverrides()
 		CppLogic.UI.InputCustomWidgetSetFocus("Trade_Market_IronAmount", false)
 		CppLogic.UI.InputCustomWidgetSetFocus("Trade_Market_SulfurAmount", false)
 	end
+
+	AdvancedUI.GUAction_MarketAcceptDeal = GUAction_MarketAcceptDeal
+	function GUAction_MarketAcceptDeal(selltype)
+		if XGUIEng.IsModifierPressed(Keys.ModifierControl) == 1 then
+			local markets = {}
+			for id in CppLogic.Entity.PlayerEntityIterator(CppLogic.Entity.Predicates.OfType(Entities.PB_Market2), GUI.GetPlayerID()) do
+				if Logic.GetTransactionProgress(id) == 100 then
+					table.insert(markets, id)
+				end
+			end
+			local sellam = InterfaceTool_MarketGetSellAmount(selltype)
+			local c = {}
+
+			c[selltype] = sellam * table.getn(markets)
+
+			if InterfaceTool_HasPlayerEnoughResources_Feedback(c) == 1 then
+				local buyty, buyam = InterfaceTool_MarketGetBuyResourceTypeAndAmount()
+				for _, id in ipairs(markets) do
+					---@diagnostic disable-next-line: param-type-mismatch
+					GUI.StartTransaction(id, selltype, buyty, buyam)
+				end
+				XGUIEng.ShowWidget(gvGUI_WidgetID.TradeInProgress, 1)
+			end
+		else
+			AdvancedUI.GUAction_MarketAcceptDeal(selltype)
+		end
+	end
+
+	AdvancedUI.GUIUpdate_CannonProgress = GUIUpdate_CannonProgress
+	function GUIUpdate_CannonProgress()
+		AdvancedUI.GUIUpdate_CannonProgress()
+		local id = GUI.GetSelectedEntity()
+		if IsValid(id) then
+			local ty = CppLogic.Entity.Building.FoundryGetCannonTypeInConstruction(id)
+			if ty == Entities.PV_Cannon1 then
+				CppLogic.UI.WidgetMaterialSetTextureCoordinates("CannonProgressType", 0, 0, 0, 0.25, 0.125)
+			elseif ty == Entities.PV_Cannon2 then
+				CppLogic.UI.WidgetMaterialSetTextureCoordinates("CannonProgressType", 0, 0, 0.125, 0.25, 0.125)
+			elseif ty == Entities.PV_Cannon3 then
+				CppLogic.UI.WidgetMaterialSetTextureCoordinates("CannonProgressType", 0, 0, 0.25, 0.25, 0.125)
+			elseif ty == Entities.PV_Cannon4 then
+				CppLogic.UI.WidgetMaterialSetTextureCoordinates("CannonProgressType", 0, 0, 0.375, 0.25, 0.125)
+			end
+		end
+	end
 end
 
 function AdvancedUI.GUIAction_UpdateMultiSelectionContainer()
 	local s = {GUI.GetSelectedEntities()}
 	AdvancedUI.MultiselectionScroll:SetDataToScrollOver(s)
+end
+
+function AdvancedUI.GetResIconString(rt)
+	if rt == ResourceType.Gold or rt == ResourceType.GoldRaw then
+		return "@icon:graphics\\textures\\gui\\i_res_gold_large,0.0625,0,0.875,0.71875,2,2,255,255,255,a|"
+	elseif rt == ResourceType.Wood or rt == ResourceType.WoodRaw then
+		return "@icon:graphics\\textures\\gui\\i_res_wood_large,0.0625,0,0.875,0.875,2,2,255,255,255,a|"
+	elseif rt == ResourceType.Clay or rt == ResourceType.ClayRaw then
+		return "@icon:graphics\\textures\\gui\\i_res_mud_large,0.0625,0,0.875,0.71875,2,2,255,255,255,a|"
+	elseif rt == ResourceType.Stone or rt == ResourceType.StoneRaw then
+		return "@icon:graphics\\textures\\gui\\i_res_stone_large,0.0625,0,0.875,0.8125,2,2,255,255,255,a|"
+	elseif rt == ResourceType.Iron or rt == ResourceType.IronRaw then
+		return "@icon:graphics\\textures\\gui\\i_res_iron_large,0.0625,0,0.875,0.71875,2,2,255,255,255,a|"
+	elseif rt == ResourceType.Sulfur or rt == ResourceType.SulfurRaw then
+		return "@icon:graphics\\textures\\gui\\i_res_sulfur_large,0.0625,0,0.875,0.71875,2,2,255,255,255,a|"
+	else
+		return ""
+	end
+end
+
+function AdvancedUI.GUIUpdate_MarketTradeStatus()
+	local id = GUI.GetSelectedEntity()
+	local txt = ""
+	if IsValid(id) and Logic.GetEntityType(id) == Entities.PB_Market2 then
+		local bt, st, ba, sa = CppLogic.Entity.Building.MarketGetCurrentTradeData(id)
+		txt = AdvancedUI.GetResIconString(st).." "..sa.." -> "..AdvancedUI.GetResIconString(bt).." "..ba
+	end
+	XGUIEng.SetText(XGUIEng.GetCurrentWidgetID(), txt)
 end
 
 ---@param button number
@@ -514,7 +586,7 @@ function AdvancedUI.GUITooltip_Damage()
 		local ty = Logic.GetEntityType(id)
 		local base, class, rand = CppLogic.EntityType.GetAutoAttackDamage(ty)
 		txt = txt..XGUIEng.GetStringTableText("AdvancedUI/dc")..AdvancedUI.GetName(class, DamageClasses)
-		.."@cr|"..XGUIEng.GetStringTableText("AdvancedUI/damage")..base.."@tab:0.5|"..XGUIEng.GetStringTableText("AdvancedUI/damageRand")..rand
+			.."@cr|"..XGUIEng.GetStringTableText("AdvancedUI/damage")..base.."@tab:0.5|"..XGUIEng.GetStringTableText("AdvancedUI/damageRand")..rand
 		if Logic.IsSettler(id) == 1 then
 			local b, r = CppLogic.Entity.Leader.GetLeveledDamageBonus(id)
 			if b and r then
@@ -524,7 +596,7 @@ function AdvancedUI.GUITooltip_Damage()
 				txt = txt.."@color:255,255,255|@cr|"..XGUIEng.GetStringTableText("AdvancedUI/level")..(Logic.GetLeaderExperienceLevel(id) + 1)..": +"..b.."@tab:0.5|+"..r
 			end
 			local techs, randomTechs = CppLogic.EntityType.Settler.GetDamageModifierTechs(ty)
-			for i=1,math.max(table.getn(techs), table.getn(randomTechs)) do
+			for i = 1, math.max(table.getn(techs), table.getn(randomTechs)) do
 				local t = techs[i]
 				local rt = randomTechs[i]
 				txt = txt.."@cr|"
@@ -567,8 +639,9 @@ function AdvancedUI.CheckExperienceLevelText(l_v, v, stt, txt)
 	if v == l_v then
 		return txt
 	end
-	return txt.." "..XGUIEng.GetStringTableText(stt).." +"..(v-l_v)
+	return txt.." "..XGUIEng.GetStringTableText(stt).." +"..(v - l_v)
 end
+
 function AdvancedUI.GUITooltip_Experience()
 	local id = GUI.GetSelectedEntity()
 	local top = Logic.GetFoundationTop(id)
@@ -580,14 +653,14 @@ function AdvancedUI.GUITooltip_Experience()
 		XGUIEng.SetText("TooltipBottomCosts", "")
 		local lvl = Logic.GetLeaderExperienceLevel(id)
 		local txt = AdvancedUI.ExtractTitle("MenuSelectionGeneric/Experience")..XGUIEng.GetStringTableText("AdvancedUI/xp")..CppLogic.Entity.Leader.GetExperience(id)
-		if AdvancedUI.ExperienceBorders[lvl+1] then
-			txt = txt.."/"..AdvancedUI.ExperienceBorders[lvl+1]
+		if AdvancedUI.ExperienceBorders[lvl + 1] then
+			txt = txt.."/"..AdvancedUI.ExperienceBorders[lvl + 1]
 		end
 		local ec = CppLogic.Entity.Settler.GetExperienceClass(id)
-		local l_rd, l_auto, l_d, l_dod, l_expl, l_reg, l_rang, l_miss, l_speed = 0,0,0,0,0,0,0,0,0
-		for i=0,4 do
+		local l_rd, l_auto, l_d, l_dod, l_expl, l_reg, l_rang, l_miss, l_speed = 0, 0, 0, 0, 0, 0, 0, 0, 0
+		for i = 0, 4 do
 			local rd, auto, d, dod, expl, reg, rang, miss, speed = CppLogic.Logic.GetExperienceLevelData(ec, i)
-			txt = txt.."@cr|"..AdvancedUI.GetConditionColor(lvl>=i)..XGUIEng.GetStringTableText("AdvancedUI/level")..(i + 1)
+			txt = txt.."@cr|"..AdvancedUI.GetConditionColor(lvl >= i)..XGUIEng.GetStringTableText("AdvancedUI/level")..(i + 1)
 			txt = AdvancedUI.CheckExperienceLevelText(l_d, d, "AdvancedUI/dmg", txt)
 			txt = AdvancedUI.CheckExperienceLevelText(l_rd, rd, "AdvancedUI/rdmg", txt)
 			txt = AdvancedUI.CheckExperienceLevelText(l_rang, rang, "AdvancedUI/rang", txt)
@@ -1036,6 +1109,31 @@ function AdvancedUI.InitUI()
 
 	CppLogic.UI.WidgetSetBaseData("MultiSelectionContainer", 0, true, false)
 	CppLogic.UI.WidgetSetPositionAndSize("MultiSelectionContainer", 984, 99, 40, 450)
+
+	assert(XGUIEng.GetWidgetID("TradeProgressText")==0, "TradeProgressText already exists")
+	CppLogic.UI.ContainerWidgetCreateStaticTextWidgetChild("TradeInProgress", "TradeProgressText", "CancelTrade")
+	CppLogic.UI.WidgetSetPositionAndSize("TradeProgressText", 185, 20, 100, 15)
+	XGUIEng.ShowWidget("TradeProgressText", 1)
+	CppLogic.UI.WidgetSetBaseData("TradeProgressText", 0, true, false)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("TradeProgressText", 0, 0, 0, 1, 1)
+	XGUIEng.SetMaterialColor("TradeProgressText", 0, 255, 255, 255, 0)
+	CppLogic.UI.WidgetSetFont("TradeProgressText", "data\\menu\\fonts\\standard10.met")
+	CppLogic.UI.WidgetSetStringFrameDistance("TradeProgressText", -4)
+	XGUIEng.SetText("TradeProgressText", "0", 1)
+	XGUIEng.SetTextColor("TradeProgressText", 255, 255, 255, 255)
+	CppLogic.UI.WidgetSetUpdateManualFlag("TradeProgressText", false)
+	CppLogic.UI.WidgetOverrideUpdateFunc("TradeProgressText", function() AdvancedUI.GUIUpdate_MarketTradeStatus() end)
+	XGUIEng.SetLinesToPrint("TradeProgressText", 0, 0)
+	CppLogic.UI.StaticTextWidgetSetLineDistanceFactor("TradeProgressText", 0)
+
+	assert(XGUIEng.GetWidgetID("CannonProgressType")==0, "CannonProgressType already exists")
+	CppLogic.UI.ContainerWidgetCreateStaticWidgetChild("CannonInProgress", "CannonProgressType", "CannonInProgressBackground")
+	CppLogic.UI.WidgetSetPositionAndSize("CannonProgressType", 51, 47, 32, 32)
+	XGUIEng.ShowWidget("CannonProgressType", 1)
+	CppLogic.UI.WidgetSetBaseData("CannonProgressType", 0, false, false)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("CannonProgressType", 0, 0, 0, 0.25, 0.125)
+	XGUIEng.SetMaterialTexture("CannonProgressType", 0, "data\\graphics\\textures\\gui\\b_foundry.png")
+	XGUIEng.SetMaterialColor("CannonProgressType", 0, 255, 255, 255, 255)
 
 	CppLogic.UI.WidgetOverrideTooltipFunc("DetailsHealth_Tooltip", AdvancedUI.GUITooltip_DetailsHealthBar)
 	CppLogic.UI.WidgetOverrideTooltipFunc("DetailsArmor_Tooltip", AdvancedUI.GUITooltip_Armor)
