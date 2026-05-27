@@ -678,11 +678,346 @@ function AdvancedUI.GUITooltip_Experience()
 	end
 end
 
+AdvancedUI.RangeMarker = {}
+
+---@type AdvUIRangeMarker
+AdvancedUI.RangeMarker.AutoAttack = {Range = 0}
+---@type AdvUIRangeMarker
+AdvancedUI.RangeMarker.AoE = {Range = 0}
+
+---@class AdvUIRangeMarker
+---@field Decal TerrainDecalAccess?
+---@field Range number
+---@field Models nil|LogicModel[]
+
+---@param m AdvUIRangeMarker
+---@param p Position
+---@param r number
+---@param coneOpen number?
+---@param coneDir number?
+function AdvancedUI.RangeMarker.Update(m, p, r, coneOpen, coneDir)
+	if m.Range ~= r then
+		if m.Decal then
+			m.Decal:Destroy()
+		end
+		m.Decal = nil
+	end
+	if r > 1500 or coneOpen then
+		if not m.Models then
+			m.Models = {}
+		end
+		local min, max = nil, nil
+		local i = 1
+		if coneOpen then
+			min = coneDir - coneOpen
+			max = coneDir + coneOpen
+		end
+		local make = function(p)
+			if not m.Models[i] then
+				m.Models[i] = CppLogic.Logic.CreateFreeModel()
+				m.Models[i]:SetModel(Models.XD_CoordinateEntity)
+			end
+			m.Models[i]:ResetTransform()
+			m.Models[i]:Translate(p, nil, nil, nil, true)
+			m.Models[i]:Rotate(p.r)
+			i = i + 1
+		end
+
+		AdvancedUI.RangeMarker.CallFuncWithCirclePositions(p, r, 150, make, min, max)
+		if coneOpen then
+			local e = {}
+			e.X, e.Y = AdvancedUI.RangeMarker.ModifyCirclePos(p, min, r)
+			e.r = min
+			AdvancedUI.RangeMarker.CallFuncWithLinePositions(p, e, make, 150)
+			e.X, e.Y = AdvancedUI.RangeMarker.ModifyCirclePos(p, max, r)
+			e.r = max
+			AdvancedUI.RangeMarker.CallFuncWithLinePositions(p, e, make, 150)
+		end
+		while m.Models[i] do
+			m.Models[i]:Clear()
+			m.Models[i] = nil
+			i = i + 1
+		end
+	else
+		if not m.Decal then
+			m.Decal = CppLogic.UI.CreateSelectionDecal("Selection_Building", p, r, r)
+		else
+			m.Decal:SetPos(p)
+		end
+		if m.Models then
+			for _, e in ipairs(m.Models) do
+				e:Clear()
+			end
+			m.Models = nil
+		end
+	end
+end
+
+function AdvancedUI.RangeMarker.ModifyCirclePos(_pos, angle, _range)
+	local nSin = math.sin(math.rad(angle))
+	local nCos = math.cos(math.rad(angle))
+	return _pos.X - nCos * _range, _pos.Y - nSin * _range
+end
+
+function AdvancedUI.RangeMarker.CallFuncWithCirclePositions(_pos, _range, _spacing, _func, minAngle, maxAngle)
+	-- Determine angle step size
+	if not minAngle then
+		minAngle = 0
+	end
+	if not maxAngle then
+		maxAngle = 360
+	end
+	local perimeter = 2 * _range * math.pi / 360 * (maxAngle-minAngle)
+	local n = math.floor(perimeter / _spacing)
+	local angleStep = (maxAngle-minAngle) / n
+
+	-- Go!
+	local p = {}
+	for i = 0, (n - 1) do
+		local angle = i * angleStep + minAngle
+		p.X, p.Y = AdvancedUI.RangeMarker.ModifyCirclePos(_pos, angle, _range)
+		p.r = angle
+		if AdvancedUI.RangeMarker.IsValidPosition(p) then
+			_func(p)
+		end
+	end
+end
+
+function AdvancedUI.RangeMarker.IsValidPosition(_position)
+	if (type(_position) == "table") then
+		if (type(_position.X) == "number") and (type(_position.Y) == "number") then
+			local x, y = Logic.WorldGetSize()
+			if ((_position.X <= x + 100) and (_position.X >= 0)) and ((_position.Y <= y + 100) and (_position.Y >= 0)) then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+function AdvancedUI.RangeMarker.CallFuncWithLinePositions(a, b, func, periode)
+    local ax = a.X
+	local ay = a.Y
+	local bx = b.X
+	local by = b.Y
+
+	-- vector a->b
+	local dx = bx - ax
+	local dy = by - ay
+
+	-- number of points
+	local d = math.sqrt(dx*dx + dy*dy)
+	local n = math.floor(d/periode + 0.5)
+
+	-- "normalize"
+	dx = dx / n
+	dy = dy / n
+
+	local p = {}
+	if b.r then
+		p.r = b.r
+	end
+	for i=1, n do
+		p.X, p.Y = ax+dx*i, ay+dy*i
+		func(p)
+	end
+end
+
+function AdvancedUI.RangeMarker.AngleDifference(a, b)
+	local c = a - b
+	if c == 0 then
+		return 0
+	end
+	if c < 0 then
+		while c < -180 do
+			c = c + 360
+		end
+		return c
+	else
+		while c > 180 do
+			c = c - 360
+		end
+		return c
+	end
+end
+
+function AdvancedUI.RangeMarker.GetAngleBetween(_Pos1,_Pos2)
+	local delta_X = 0;
+	local delta_Y = 0;
+	local alpha   = 0
+	if type (_Pos1) == "string" or type (_Pos1) == "number" then
+		_Pos1 = GetPosition(GetEntityId(_Pos1));
+	end
+	if type (_Pos2) == "string" or type (_Pos2) == "number" then
+		_Pos2 = GetPosition(GetEntityId(_Pos2));
+	end
+	delta_X = _Pos1.X - _Pos2.X
+	delta_Y = _Pos1.Y - _Pos2.Y
+	if delta_X == 0 and delta_Y == 0 then -- Gleicher Punkt
+		return 0
+	end
+	alpha = math.deg(math.asin(math.abs(delta_X)/(math.sqrt(__pow(delta_X, 2)+__pow(delta_Y, 2)))))
+	if delta_X >= 0 and delta_Y > 0 then
+		alpha = 270 - alpha 
+	elseif delta_X < 0 and delta_Y > 0 then
+		alpha = 270 + alpha
+	elseif delta_X < 0 and delta_Y <= 0 then
+		alpha = 90  - alpha
+	elseif delta_X >= 0 and delta_Y <= 0 then
+		alpha = 90  + alpha
+	end
+	return alpha
+end
+
+---@param m AdvUIRangeMarker
+function AdvancedUI.RangeMarker.Clear(m)
+	if m.Decal then
+		m.Decal:Destroy()
+	end
+	m.Decal = nil
+	if m.Models then
+		for _, e in ipairs(m.Models) do
+			e:Clear()
+		end
+		m.Models = nil
+	end
+end
+
+AdvancedUI.RangeMarker.StateMapping = {}
+function AdvancedUI.RangeMarker.StateMapping.SnipeCommand(p, tp, id)
+	local _,r = CppLogic.EntityType.Settler.GetAbilityDataSniper(Logic.GetEntityType(id))
+	return r
+end
+function AdvancedUI.RangeMarker.StateMapping.ShurikenCommand(p, tp, id)
+	local _,_,_,r,a = CppLogic.EntityType.Settler.GetAbilityDataShuriken(Logic.GetEntityType(id))
+	return r, nil, a
+end
+function AdvancedUI.RangeMarker.StateMapping.PlaceBombCommand(p, tp, id)
+	local _,_,r = CppLogic.EntityType.GetBombData(Entities.XD_Bomb1)
+	return nil, r
+end
+function AdvancedUI.RangeMarker.StateMapping.ConvertSettlerCommand(p, tp, id)
+	local s,m = CppLogic.EntityType.Settler.GetAbilityDataConvertSettler(Logic.GetEntityType(id))
+	tp.X, tp.Y = p.X, p.Y
+	return s, m
+end
+function AdvancedUI.RangeMarker.StateMapping.PlaceCannon(p, tp, id)
+	local _,t = CppLogic.UI.GetPlaceBuildingUCat()
+	if t == Entities.PU_Hero2_Cannon1 then
+		local a = CppLogic.EntityType.GetAutoAttackRange(Entities.PU_Hero2_Cannon1)
+		if a > 0 then
+			return nil, a
+		end
+	elseif t == Entities.PU_Hero3_TrapCannon then
+		local _,_,a = CppLogic.EntityType.GetAutoAttackRange(Entities.PU_Hero3_TrapCannon)
+		if a > 0 then
+			return nil, a
+		end
+	end
+end
+
+AdvancedUI.RangeMarker.WidgetMapping = {}
+function AdvancedUI.RangeMarker.WidgetMapping.Hero1_ProtectUnits(p, tp, id)
+	local r = CppLogic.EntityType.Settler.GetAbilityDataFear(Logic.GetEntityType(id))
+	return r
+end
+AdvancedUI.RangeMarker.WidgetMapping.Hero7_InflictFear = AdvancedUI.RangeMarker.WidgetMapping.Hero1_ProtectUnits
+AdvancedUI.RangeMarker.WidgetMapping.Hero11_FireworksFear = AdvancedUI.RangeMarker.WidgetMapping.Hero1_ProtectUnits
+function AdvancedUI.RangeMarker.WidgetMapping.Hero4_CircularAttack(p, tp, id)
+	local _,_, r = CppLogic.EntityType.Settler.GetAbilityDataCircularAttack(Logic.GetEntityType(id))
+	return r
+end
+AdvancedUI.RangeMarker.WidgetMapping.Hero8_Poison = AdvancedUI.RangeMarker.WidgetMapping.Hero4_CircularAttack
+AdvancedUI.RangeMarker.WidgetMapping.Hero12_PoisonRange = AdvancedUI.RangeMarker.WidgetMapping.Hero4_CircularAttack
+function AdvancedUI.RangeMarker.WidgetMapping.Hero4_AuraOfWar(p, tp, id)
+	local _,_,_, r = CppLogic.EntityType.Settler.GetAbilityDataRangedEffect(Logic.GetEntityType(id))
+	return r
+end
+AdvancedUI.RangeMarker.WidgetMapping.Hero3_Heal = AdvancedUI.RangeMarker.WidgetMapping.Hero4_AuraOfWar
+AdvancedUI.RangeMarker.WidgetMapping.Hero6_Bless = AdvancedUI.RangeMarker.WidgetMapping.Hero4_AuraOfWar
+AdvancedUI.RangeMarker.WidgetMapping.Hero7_Madness = AdvancedUI.RangeMarker.WidgetMapping.Hero4_AuraOfWar
+AdvancedUI.RangeMarker.WidgetMapping.Hero8_MoraleDamage = AdvancedUI.RangeMarker.WidgetMapping.Hero4_AuraOfWar
+AdvancedUI.RangeMarker.WidgetMapping.Hero9_Berserk = AdvancedUI.RangeMarker.WidgetMapping.Hero4_AuraOfWar
+AdvancedUI.RangeMarker.WidgetMapping.Hero10_LongRangeAura = AdvancedUI.RangeMarker.WidgetMapping.Hero4_AuraOfWar
+function AdvancedUI.RangeMarker.WidgetMapping.Hero11_FireworksMotivate(p, tp, id)
+	local r = CppLogic.EntityType.Settler.GetAbilityDataMotivate(Logic.GetEntityType(id))
+	return r
+end
+
+function AdvancedUI.RangeMarker.Show()
+	local id = GUI.GetSelectedEntity()
+	local is_top = false
+	if IsValid(id) then
+		local top = Logic.GetFoundationTop(id)
+		if IsValid(top) then
+			id = top
+			is_top = true
+		end
+	end
+	if IsDestroyed(id) or not (Logic.IsLeader(id) == 1 or is_top) then
+		AdvancedUI.RangeMarker.Clear(AdvancedUI.RangeMarker.AutoAttack)
+		AdvancedUI.RangeMarker.Clear(AdvancedUI.RangeMarker.AoE)
+		return
+	end
+
+	local autoattack, aoe, coneOpen = nil, nil, nil
+	local p = GetPosition(id)
+	local tx, ty = GUI.Debug_GetMapPositionUnderMouse()
+	local guiState = GUI.GetCurrentStateName()
+	local t = {X=tx,Y=ty}
+
+	if AdvancedUI.RangeMarker.StateMapping[guiState] then
+		autoattack, aoe, coneOpen = AdvancedUI.RangeMarker.StateMapping[guiState](p, t, id)
+	else
+		local x,y = GUI.GetMousePosition()
+		local dx,dy = GUI.GetScreenSize()
+		x = x / dx * 1024
+		y = y / dy * 768
+		local wid = CppLogic.UI.GetWidgetAtPosition("root", x, y)
+		local done = false
+		if wid ~= 0 then
+			local widn = CppLogic.UI.GetWidgetName(wid)
+			if AdvancedUI.RangeMarker.WidgetMapping[widn] then
+				autoattack, aoe = AdvancedUI.RangeMarker.WidgetMapping[widn](p, t, id)
+				done = true
+			end
+		end
+		if not done then
+			if Logic.IsEntityInCategory(id, EntityCategories.Melee) == 0 then
+				autoattack = CppLogic.Entity.GetAutoAttackMaxRange(id)
+			end
+			local _,_,a = CppLogic.EntityType.GetAutoAttackRange(Logic.GetEntityType(id))
+			if a > 0 then
+				aoe = a
+			end
+		end
+	end
+
+	if autoattack and coneOpen then
+		AdvancedUI.RangeMarker.Update(AdvancedUI.RangeMarker.AutoAttack, p, autoattack, coneOpen, AdvancedUI.RangeMarker.GetAngleBetween(t, p))
+	elseif autoattack then
+		AdvancedUI.RangeMarker.Update(AdvancedUI.RangeMarker.AutoAttack, p, autoattack)
+	else
+		AdvancedUI.RangeMarker.Clear(AdvancedUI.RangeMarker.AutoAttack)
+	end
+	if aoe then
+		AdvancedUI.RangeMarker.Update(AdvancedUI.RangeMarker.AoE, t, aoe)
+	else
+		AdvancedUI.RangeMarker.Clear(AdvancedUI.RangeMarker.AoE)
+	end
+end
+
 function AdvancedUI.Init()
 	GUIAction_UpdateMultiSelectionContainer = AdvancedUI.GUIAction_UpdateMultiSelectionContainer
 	GUIUpate_DetailsHealthBar = AdvancedUI.GUIUpate_DetailsHealthBar
 	GUIUpdate_DetailsHealthPoints = AdvancedUI.GUIUpdate_DetailsHealthPoints
 	AdvancedUI.InitMarketOverrides()
+	AdvancedUI.GUIUpdate_AverageMotivation = GUIUpdate_AverageMotivation
+	function GUIUpdate_AverageMotivation()
+		AdvancedUI.GUIUpdate_AverageMotivation()
+		AdvancedUI.RangeMarker.Show()
+	end
+
 	AdvancedUI.InitUI()
 	return true
 end
@@ -1110,7 +1445,7 @@ function AdvancedUI.InitUI()
 	CppLogic.UI.WidgetSetBaseData("MultiSelectionContainer", 0, true, false)
 	CppLogic.UI.WidgetSetPositionAndSize("MultiSelectionContainer", 984, 99, 40, 450)
 
-	assert(XGUIEng.GetWidgetID("TradeProgressText")==0, "TradeProgressText already exists")
+	assert(XGUIEng.GetWidgetID("TradeProgressText") == 0, "TradeProgressText already exists")
 	CppLogic.UI.ContainerWidgetCreateStaticTextWidgetChild("TradeInProgress", "TradeProgressText", "CancelTrade")
 	CppLogic.UI.WidgetSetPositionAndSize("TradeProgressText", 185, 20, 100, 15)
 	XGUIEng.ShowWidget("TradeProgressText", 1)
@@ -1126,7 +1461,7 @@ function AdvancedUI.InitUI()
 	XGUIEng.SetLinesToPrint("TradeProgressText", 0, 0)
 	CppLogic.UI.StaticTextWidgetSetLineDistanceFactor("TradeProgressText", 0)
 
-	assert(XGUIEng.GetWidgetID("CannonProgressType")==0, "CannonProgressType already exists")
+	assert(XGUIEng.GetWidgetID("CannonProgressType") == 0, "CannonProgressType already exists")
 	CppLogic.UI.ContainerWidgetCreateStaticWidgetChild("CannonInProgress", "CannonProgressType", "CannonInProgressBackground")
 	CppLogic.UI.WidgetSetPositionAndSize("CannonProgressType", 51, 47, 32, 32)
 	XGUIEng.ShowWidget("CannonProgressType", 1)
