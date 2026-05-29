@@ -4,7 +4,6 @@ ModLoader.AdvancedUI = {
 	Manifest = {
 		StringTableTexts = {
 			AdvancedUI = true,
-			AdvancedUINames = "Names",
 		},
 	},
 }
