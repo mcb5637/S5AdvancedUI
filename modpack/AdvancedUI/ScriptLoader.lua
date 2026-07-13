@@ -291,22 +291,30 @@ function AdvancedUI.GUIAction_UpdateMultiSelectionContainer()
 	AdvancedUI.MultiselectionScroll:SetDataToScrollOver(s)
 end
 
-function AdvancedUI.GetResIconString(rt)
+function AdvancedUI.GetResIcon(rt)
 	if rt == ResourceType.Gold or rt == ResourceType.GoldRaw then
-		return "@icon:graphics\\textures\\gui\\i_res_gold_large,0.0625,0,0.875,0.71875,2,2,255,255,255,a|"
+		return "graphics\\textures\\gui\\i_res_gold_large",0.0625,0,0.875,0.71875
 	elseif rt == ResourceType.Wood or rt == ResourceType.WoodRaw then
-		return "@icon:graphics\\textures\\gui\\i_res_wood_large,0.0625,0,0.875,0.875,2,2,255,255,255,a|"
+		return "graphics\\textures\\gui\\i_res_wood_large",0.0625,0,0.875,0.875
 	elseif rt == ResourceType.Clay or rt == ResourceType.ClayRaw then
-		return "@icon:graphics\\textures\\gui\\i_res_mud_large,0.0625,0,0.875,0.71875,2,2,255,255,255,a|"
+		return "graphics\\textures\\gui\\i_res_mud_large",0.0625,0,0.875,0.71875
 	elseif rt == ResourceType.Stone or rt == ResourceType.StoneRaw then
-		return "@icon:graphics\\textures\\gui\\i_res_stone_large,0.0625,0,0.875,0.8125,2,2,255,255,255,a|"
+		return "graphics\\textures\\gui\\i_res_stone_large",0.0625,0,0.875,0.8125
 	elseif rt == ResourceType.Iron or rt == ResourceType.IronRaw then
-		return "@icon:graphics\\textures\\gui\\i_res_iron_large,0.0625,0,0.875,0.71875,2,2,255,255,255,a|"
+		return "graphics\\textures\\gui\\i_res_iron_large",0.0625,0,0.875,0.71875
 	elseif rt == ResourceType.Sulfur or rt == ResourceType.SulfurRaw then
-		return "@icon:graphics\\textures\\gui\\i_res_sulfur_large,0.0625,0,0.875,0.71875,2,2,255,255,255,a|"
+		return "graphics\\textures\\gui\\i_res_sulfur_large",0.0625,0,0.875,0.71875
 	else
+		return "",0,0,1,1
+	end
+end
+
+function AdvancedUI.GetResIconString(rt)
+	local iconid,texX,texY,texW,texH = AdvancedUI.GetResIcon(rt)
+	if iconid == "" then
 		return ""
 	end
+	return "@icon:"..iconid..","..texX..","..texY..","..texW..","..texH..",2,2,255,255,255,a|"
 end
 
 function AdvancedUI.GUIUpdate_MarketTradeStatus()
