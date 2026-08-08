@@ -933,5 +933,5 @@ function AdvancedUI.InitUI()
 end
 
 CppLogic.API.EnableScriptTriggerEval(true)
-Trigger.RequestTrigger(Events.CPPLOGIC_EVENT_ON_MAP_STARTED, nil, "AdvancedUI.Init", 1)
-Trigger.RequestTrigger(Events.CPPLOGIC_EVENT_ON_SAVEGAME_LOADED, nil, "AdvancedUI.InitUI", 1)
+Trigger.RequestTriggerBackup(Events.CPPLOGIC_EVENT_ON_MAP_STARTED, nil, "AdvancedUI.Init", 1)
+Trigger.RequestTriggerBackup(Events.CPPLOGIC_EVENT_ON_SAVEGAME_LOADED, nil, "AdvancedUI.InitUI", 1)
