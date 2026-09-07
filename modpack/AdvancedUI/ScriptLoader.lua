@@ -78,6 +78,8 @@ function AdvancedUI.DoSaveGame()
 	end
 	local saveName = AdvancedUI.CreateSaveName()
 
+	local isEMS = CppLogic.UI.GetWidgetName(XGUIEng.GetWidgetsMotherID("MainMenuSaveWindow")) == "EMSPages"
+
 	if s.Name == "" then
 		---@diagnostic disable-next-line: undefined-global
 		if FrameworkWrapper then
@@ -87,12 +89,34 @@ function AdvancedUI.DoSaveGame()
 			Framework.SaveGame(s.Save, saveName)
 		end
 		GUI.AddNote(XGUIEng.GetStringTableText("InGameMessages/GUI_GameSaved"))
-		GUIAction_ToggleMenu(XGUIEng.GetWidgetID("MainMenuWindow"), 0)
+		if isEMS then
+			EMS.GL.ToggleMainMenu()
+		else
+			GUIAction_ToggleMenu(XGUIEng.GetWidgetID("MainMenuWindow"), 0)
+		end
 	else
 		MainWindow_SaveGame_SaveGameName = s.Save
 		MainWindow_SaveGame_SaveGameDescOld = s.Desc
 		MainWindow_SaveGame_SaveGameDescNew = saveName
-		GUIAction_ToggleMenu("MainMenuBoxOverwriteWindow", 1)
+		if isEMS then
+			EMS.GL.OpenYesNoDialog(EMS.L.DoYouReallyWantToOverwriteThisSaveGame,
+								   function()
+									   EMS.GL.ShowPage("", 0)
+									   EMS.GL.ToggleMainMenu()
+									   if FrameworkWrapper then
+										   ---@diagnostic disable-next-line: undefined-global
+										   FrameworkWrapper.Savegame.DoSave(MainWindow_SaveGame_SaveGameName, MainWindow_SaveGame_SaveGameDescNew)
+									   else
+										   Framework.SaveGame(MainWindow_SaveGame_SaveGameName, MainWindow_SaveGame_SaveGameDescNew)
+									   end
+									   GUI.AddNote(XGUIEng.GetStringTableText("InGameMessages/GUI_GameSaved"))
+								   end,
+								   function()
+									   EMS.GL.ShowPage("MainMenuSaveWindow")
+								   end)
+		else
+			GUIAction_ToggleMenu("MainMenuBoxOverwriteWindow", 1)
+		end
 	end
 end
 
@@ -293,24 +317,24 @@ end
 
 function AdvancedUI.GetResIcon(rt)
 	if rt == ResourceType.Gold or rt == ResourceType.GoldRaw then
-		return "graphics\\textures\\gui\\i_res_gold_large",0.0625,0,0.875,0.71875
+		return "graphics\\textures\\gui\\i_res_gold_large", 0.0625, 0, 0.875, 0.71875
 	elseif rt == ResourceType.Wood or rt == ResourceType.WoodRaw then
-		return "graphics\\textures\\gui\\i_res_wood_large",0.0625,0,0.875,0.875
+		return "graphics\\textures\\gui\\i_res_wood_large", 0.0625, 0, 0.875, 0.875
 	elseif rt == ResourceType.Clay or rt == ResourceType.ClayRaw then
-		return "graphics\\textures\\gui\\i_res_mud_large",0.0625,0,0.875,0.71875
+		return "graphics\\textures\\gui\\i_res_mud_large", 0.0625, 0, 0.875, 0.71875
 	elseif rt == ResourceType.Stone or rt == ResourceType.StoneRaw then
-		return "graphics\\textures\\gui\\i_res_stone_large",0.0625,0,0.875,0.8125
+		return "graphics\\textures\\gui\\i_res_stone_large", 0.0625, 0, 0.875, 0.8125
 	elseif rt == ResourceType.Iron or rt == ResourceType.IronRaw then
-		return "graphics\\textures\\gui\\i_res_iron_large",0.0625,0,0.875,0.71875
+		return "graphics\\textures\\gui\\i_res_iron_large", 0.0625, 0, 0.875, 0.71875
 	elseif rt == ResourceType.Sulfur or rt == ResourceType.SulfurRaw then
-		return "graphics\\textures\\gui\\i_res_sulfur_large",0.0625,0,0.875,0.71875
+		return "graphics\\textures\\gui\\i_res_sulfur_large", 0.0625, 0, 0.875, 0.71875
 	else
-		return "",0,0,1,1
+		return "", 0, 0, 1, 1
 	end
 end
 
 function AdvancedUI.GetResIconString(rt)
-	local iconid,texX,texY,texW,texH = AdvancedUI.GetResIcon(rt)
+	local iconid, texX, texY, texW, texH = AdvancedUI.GetResIcon(rt)
 	if iconid == "" then
 		return ""
 	end
