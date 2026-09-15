@@ -39,7 +39,7 @@
         </ShortCutString>
       </ButtonHelper>
       <Materials>
-        <Texture>data\graphics\textures\gui\mainmenu\sub.png</Texture>
+        <Texture>data\graphics\textures\gui\window_bg187x32.png</Texture>
         <TextureCoordinates>
           <X>0</X>
           <Y>0</Y>
@@ -54,7 +54,7 @@
         </Color>
       </Materials>
       <Materials>
-        <Texture>data\graphics\textures\gui\mainmenu\sub_hi.png</Texture>
+        <Texture>data\graphics\textures\gui\window_bg187x32.png</Texture>
         <TextureCoordinates>
           <X>0</X>
           <Y>0</Y>
@@ -69,7 +69,7 @@
         </Color>
       </Materials>
       <Materials>
-        <Texture>data\graphics\textures\gui\mainmenu\sub_sel.png</Texture>
+        <Texture>data\graphics\textures\gui\window_bg187x32.png</Texture>
         <TextureCoordinates>
           <X>0</X>
           <Y>0</Y>
@@ -84,7 +84,7 @@
         </Color>
       </Materials>
       <Materials>
-        <Texture>data\graphics\textures\gui\mainmenu\sub_in.png</Texture>
+        <Texture>data\graphics\textures\gui\window_bg187x32.png</Texture>
         <TextureCoordinates>
           <X>0</X>
           <Y>0</Y>
@@ -99,7 +99,7 @@
         </Color>
       </Materials>
       <Materials>
-        <Texture>data\graphics\textures\gui\mainmenu\sub_akt.png</Texture>
+        <Texture>data\graphics\textures\gui\window_bg187x32.png</Texture>
         <TextureCoordinates>
           <X>0</X>
           <Y>0</Y>
@@ -910,12 +910,12 @@
                 </ShortCutString>
               </ButtonHelper>
               <Materials>
-                <Texture>data\graphics\textures\gui\mainmenu\small_button.png</Texture>
+                <Texture>data\graphics\textures\gui\dropdown\dropmenudown187x32.png</Texture>
                 <TextureCoordinates>
                   <X>0</X>
                   <Y>0</Y>
-                  <W>0.9420289855072463</W>
-                  <H>0.8723404255319149</H>
+                  <W>1</W>
+                  <H>1</H>
                 </TextureCoordinates>
                 <Color>
                   <Red>255</Red>
@@ -925,12 +925,12 @@
                 </Color>
               </Materials>
               <Materials>
-                <Texture>data\graphics\textures\gui\mainmenu\small_button_hi.png</Texture>
+                <Texture>data\graphics\textures\gui\dropdown\dropmenudown187x32_hi.png</Texture>
                 <TextureCoordinates>
                   <X>0</X>
                   <Y>0</Y>
-                  <W>0.9420289855072463</W>
-                  <H>0.8723404255319149</H>
+                  <W>1</W>
+                  <H>1</H>
                 </TextureCoordinates>
                 <Color>
                   <Red>255</Red>
@@ -940,12 +940,12 @@
                 </Color>
               </Materials>
               <Materials>
-                <Texture>data\graphics\textures\gui\mainmenu\small_button_sel.png</Texture>
+                <Texture>data\graphics\textures\gui\dropdown\dropmenudown187x32_sel.png</Texture>
                 <TextureCoordinates>
                   <X>0</X>
                   <Y>0</Y>
-                  <W>0.9420289855072463</W>
-                  <H>0.8723404255319149</H>
+                  <W>1</W>
+                  <H>1</H>
                 </TextureCoordinates>
                 <Color>
                   <Red>255</Red>
@@ -955,12 +955,12 @@
                 </Color>
               </Materials>
               <Materials>
-                <Texture>data\graphics\textures\gui\mainmenu\small_button_in.png</Texture>
+                <Texture>data\graphics\textures\gui\dropdown\dropmenudown187x32_in.png</Texture>
                 <TextureCoordinates>
                   <X>0</X>
                   <Y>0</Y>
-                  <W>0.9420289855072463</W>
-                  <H>0.8723404255319149</H>
+                  <W>1</W>
+                  <H>1</H>
                 </TextureCoordinates>
                 <Color>
                   <Red>255</Red>
@@ -970,12 +970,12 @@
                 </Color>
               </Materials>
               <Materials>
-                <Texture>data\graphics\textures\gui\mainmenu\small_button_akt.png</Texture>
+                <Texture>data\graphics\textures\gui\dropdown\dropmenudown187x32_akt.png</Texture>
                 <TextureCoordinates>
                   <X>0</X>
                   <Y>0</Y>
-                  <W>0.9420289855072463</W>
-                  <H>0.8723404255319149</H>
+                  <W>1</W>
+                  <H>1</H>
                 </TextureCoordinates>
                 <Color>
                   <Red>255</Red>
@@ -1106,10 +1106,10 @@
               <Materials>
                 <Texture>data\graphics\textures\gui\trade_ok.png</Texture>
                 <TextureCoordinates>
-                  <X>0.6100000143051154</X>
+                  <X>0.6100000143051147</X>
                   <Y>0</Y>
-                  <W>0.20000000298023193</W>
-                  <H>0.10000000149011615</H>
+                  <W>0.20000000298023224</W>
+                  <H>0.10000000149011612</H>
                 </TextureCoordinates>
                 <Color>
                   <Red>255</Red>

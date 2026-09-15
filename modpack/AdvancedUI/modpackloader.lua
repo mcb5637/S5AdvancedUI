@@ -5,6 +5,18 @@ ModLoader.AdvancedUI = {
 		StringTableTexts = {
 			AdvancedUI = true,
 		},
+		GUITextures = {
+			"data\\graphics\\textures\\gui\\dropdown\\dropmenudown187x32.png",
+			"data\\graphics\\textures\\gui\\dropdown\\dropmenudown187x32_hi.png",
+			"data\\graphics\\textures\\gui\\dropdown\\dropmenudown187x32_sel.png",
+			"data\\graphics\\textures\\gui\\dropdown\\dropmenudown187x32_in.png",
+			"data\\graphics\\textures\\gui\\dropdown\\dropmenudown187x32_akt.png",
+			"data\\graphics\\textures\\gui\\dropdown\\dropmenuup187x32.png",
+			"data\\graphics\\textures\\gui\\dropdown\\dropmenuup187x32_hi.png",
+			"data\\graphics\\textures\\gui\\dropdown\\dropmenuup187x32_sel.png",
+			"data\\graphics\\textures\\gui\\dropdown\\dropmenuup187x32_in.png",
+			"data\\graphics\\textures\\gui\\dropdown\\dropmenuup187x32_akt.png",
+		},
 	},
 	Settings = {}
 }
