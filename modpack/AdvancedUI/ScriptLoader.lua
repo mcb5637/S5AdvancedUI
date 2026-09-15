@@ -644,14 +644,28 @@ function AdvancedUI.GetTextByResType(rt)
 end
 
 function AdvancedUI.GUIUpdate_DiplomacyResType()
+	local w = XGUIEng.GetCurrentWidgetID()
 	---@type number?
-	local sel = AdvancedUI.DiplomacyPlayerScroll:GetElementOf(XGUIEng.GetCurrentWidgetID(), 1)
+	local sel = AdvancedUI.DiplomacyPlayerScroll:GetElementOf(w, 1)
 	if not sel then
 		return
 	end
 	local rt = AdvancedUI.PlayerToResDonationType[sel] or ResourceType.Gold
 	local name = AdvancedUI.GetTextByResType(rt)
 	XGUIEng.SetText(XGUIEng.GetCurrentWidgetID(), name)
+	if AdvancedUI.DiplomacyResDropdown:IsDropdownAttachedTo(w) then
+		XGUIEng.SetMaterialTexture(w, 0, "data\\graphics\\textures\\gui\\dropdown\\small_dropmenu_down.png")
+		XGUIEng.SetMaterialTexture(w, 1, "data\\graphics\\textures\\gui\\dropdown\\small_dropmenu_down_hi.png")
+		XGUIEng.SetMaterialTexture(w, 2, "data\\graphics\\textures\\gui\\dropdown\\small_dropmenu_down_sel.png")
+		XGUIEng.SetMaterialTexture(w, 3, "data\\graphics\\textures\\gui\\dropdown\\small_dropmenu_down_in.png")
+		XGUIEng.SetMaterialTexture(w, 4, "data\\graphics\\textures\\gui\\dropdown\\small_dropmenu_down_akt.png")
+	else
+		XGUIEng.SetMaterialTexture(w, 0, "data\\graphics\\textures\\gui\\dropdown\\small_dropmenu_up.png")
+		XGUIEng.SetMaterialTexture(w, 1, "data\\graphics\\textures\\gui\\dropdown\\small_dropmenu_up_hi.png")
+		XGUIEng.SetMaterialTexture(w, 2, "data\\graphics\\textures\\gui\\dropdown\\small_dropmenu_up_sel.png")
+		XGUIEng.SetMaterialTexture(w, 3, "data\\graphics\\textures\\gui\\dropdown\\small_dropmenu_up_in.png")
+		XGUIEng.SetMaterialTexture(w, 4, "data\\graphics\\textures\\gui\\dropdown\\small_dropmenu_up_akt.png")
+	end
 end
 
 function AdvancedUI.GUIAction_DiplomacySelectResType()
