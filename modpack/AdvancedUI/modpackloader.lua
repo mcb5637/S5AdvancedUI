@@ -6,6 +6,7 @@ ModLoader.AdvancedUI = {
 			AdvancedUI = true,
 		},
 	},
+	Settings = {}
 }
 
 ---gets called on loading your ModPack.
