@@ -494,6 +494,8 @@ end
 
 ---@type CPPLAutoScroll<number>
 AdvancedUI.DiplomacyPlayerScroll = AutoScroll.Init("DiplomacyWindowScroll", nil, nil, nil, true)
+---@type CPPLAutoScroll<number>
+AdvancedUI.DiplomacyResDropdown = AutoScroll.Init("DiplomacyWindowResDropdown_Scroll", nil, nil, nil, true)
 
 function AdvancedUI.GUIUpdate_MinimapInDiplomacyMenu()
 	AdvancedUI.GUIUpdate_MinimapInDiplomacyMenuOrig()
@@ -599,33 +601,30 @@ function AdvancedUI.ShowResDonation(p)
 	return XNetwork.Manager_DoesExist() == 1
 end
 
-AdvancedUI.ResDonationNextRes = {
-	[ResourceType.Gold] = ResourceType.Clay,
-	[ResourceType.Clay] = ResourceType.Wood,
-	[ResourceType.Wood] = ResourceType.Stone,
-	[ResourceType.Stone] = ResourceType.Iron,
-	[ResourceType.Iron] = ResourceType.Sulfur,
-	[ResourceType.Sulfur] = ResourceType.Gold,
+AdvancedUI.ResDonationTypes = {
+	ResourceType.Gold,
+	ResourceType.Clay,
+	ResourceType.Wood,
+	ResourceType.Stone,
+	ResourceType.Iron,
+	ResourceType.Sulfur,
 }
 
 function AdvancedUI.GUIAction_DiplomacyResType()
+	local w = XGUIEng.GetCurrentWidgetID()
 	---@type number?
-	local sel = AdvancedUI.DiplomacyPlayerScroll:GetElementOf(XGUIEng.GetCurrentWidgetID(), 1)
+	local sel = AdvancedUI.DiplomacyPlayerScroll:GetElementOf(w, 1)
 	if not sel then
 		return
 	end
-	local rt = AdvancedUI.PlayerToResDonationType[sel] or ResourceType.Gold
-	rt = AdvancedUI.ResDonationNextRes[rt] or ResourceType.Gold
-	AdvancedUI.PlayerToResDonationType[sel] = rt
+	if AdvancedUI.DiplomacyResDropdown:IsDropdownAttachedTo(w) then
+		AdvancedUI.DiplomacyResDropdown:HideDropdown()
+	else
+		AdvancedUI.DiplomacyResDropdown:ShowAsDropdown(AdvancedUI.ResDonationTypes, w)
+	end
 end
 
-function AdvancedUI.GUIUpdate_DiplomacyResType()
-	---@type number?
-	local sel = AdvancedUI.DiplomacyPlayerScroll:GetElementOf(XGUIEng.GetCurrentWidgetID(), 1)
-	if not sel then
-		return
-	end
-	local rt = AdvancedUI.PlayerToResDonationType[sel] or ResourceType.Gold
+function AdvancedUI.GetTextByResType(rt)
 	local name = ""
 	if rt == ResourceType.Gold then
 		name = "InGameMessages/GUI_NameMoney"
@@ -640,7 +639,43 @@ function AdvancedUI.GUIUpdate_DiplomacyResType()
 	else
 		name = "InGameMessages/GUI_NameWood"
 	end
-	name = XGUIEng.GetStringTableText(name)
+	name = "@center|"..XGUIEng.GetStringTableText(name)
+	return name
+end
+
+function AdvancedUI.GUIUpdate_DiplomacyResType()
+	---@type number?
+	local sel = AdvancedUI.DiplomacyPlayerScroll:GetElementOf(XGUIEng.GetCurrentWidgetID(), 1)
+	if not sel then
+		return
+	end
+	local rt = AdvancedUI.PlayerToResDonationType[sel] or ResourceType.Gold
+	local name = AdvancedUI.GetTextByResType(rt)
+	XGUIEng.SetText(XGUIEng.GetCurrentWidgetID(), name)
+end
+
+function AdvancedUI.GUIAction_DiplomacySelectResType()
+	---@type number?
+	local sel = AdvancedUI.DiplomacyResDropdown:GetElementOf(XGUIEng.GetCurrentWidgetID(), 0)
+	if not sel then
+		return
+	end
+	---@type number?
+	local pl = AdvancedUI.DiplomacyPlayerScroll:GetElementOf(AdvancedUI.DiplomacyResDropdown.DropdownParent, 1)
+	if not pl then
+		return
+	end
+	AdvancedUI.PlayerToResDonationType[pl] = sel
+	AdvancedUI.DiplomacyResDropdown:HideDropdown()
+end
+
+function AdvancedUI.GUIUpdate_DiplomacySelectResType()
+	---@type number?
+	local sel = AdvancedUI.DiplomacyResDropdown:GetElementOf(XGUIEng.GetCurrentWidgetID(), 0)
+	if not sel then
+		return
+	end
+	local name = AdvancedUI.GetTextByResType(sel)
 	XGUIEng.SetText(XGUIEng.GetCurrentWidgetID(), name)
 end
 
@@ -1155,6 +1190,10 @@ function AdvancedUI.InitUI()
 
 
 
+	assert(XGUIEng.GetWidgetID("DiplomacyWindowResDropdown") == 0, "DiplomacyWindowResDropdown already exists")
+	assert(XGUIEng.GetWidgetID("DiplomacyWindowResDropdown_Scrollable") == 0, "DiplomacyWindowResDropdown_Scrollable already exists")
+	assert(XGUIEng.GetWidgetID("DiplomacyWindowResDropdown_Scroll") == 0, "DiplomacyWindowResDropdown_Scroll already exists")
+	assert(XGUIEng.GetWidgetID("DiplomacyWindowResDropdown_DropBG") == 0, "DiplomacyWindowResDropdown_DropBG already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayers") == 0, "DiplomacyWindowPlayers already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowSelectors") == 0, "DiplomacyWindowSelectors already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayer") == 0, "DiplomacyWindowPlayer already exists")
@@ -1171,6 +1210,50 @@ function AdvancedUI.InitUI()
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayerOpponentState") == 0, "DiplomacyWindowPlayerOpponentState already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowScroll") == 0, "DiplomacyWindowScroll already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowFoW") == 0, "DiplomacyWindowFoW already exists")
+	CppLogic.UI.ContainerWidgetCreateContainerWidgetChild("DiplomacyWindow", "DiplomacyWindowResDropdown", "DiplomacyWindowCloseButton")
+	CppLogic.UI.WidgetSetPositionAndSize("DiplomacyWindowResDropdown", 500, 150, 160, 100)
+	XGUIEng.ShowWidget("DiplomacyWindowResDropdown", 0)
+	CppLogic.UI.WidgetSetBaseData("DiplomacyWindowResDropdown", 0, false, false)
+	CppLogic.UI.ContainerWidgetCreateTextButtonWidgetChild("DiplomacyWindowResDropdown", "DiplomacyWindowResDropdown_Scrollable", nil)
+	CppLogic.UI.WidgetSetPositionAndSize("DiplomacyWindowResDropdown_Scrollable", 0, 0, 150, 31)
+	XGUIEng.ShowWidget("DiplomacyWindowResDropdown_Scrollable", 1)
+	CppLogic.UI.WidgetSetBaseData("DiplomacyWindowResDropdown_Scrollable", 0, false, false)
+	XGUIEng.DisableButton("DiplomacyWindowResDropdown_Scrollable", 0)
+	XGUIEng.HighLightButton("DiplomacyWindowResDropdown_Scrollable", 0)
+	CppLogic.UI.ButtonOverrideActionFunc("DiplomacyWindowResDropdown_Scrollable", function() AdvancedUI.GUIAction_DiplomacySelectResType() end)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowResDropdown_Scrollable", 0, 0, 0, 1, 1)
+	XGUIEng.SetMaterialTexture("DiplomacyWindowResDropdown_Scrollable", 0, "data\\graphics\\textures\\gui\\mainmenu\\sub.png")
+	XGUIEng.SetMaterialColor("DiplomacyWindowResDropdown_Scrollable", 0, 255, 255, 255, 255)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowResDropdown_Scrollable", 1, 0, 0, 1, 1)
+	XGUIEng.SetMaterialTexture("DiplomacyWindowResDropdown_Scrollable", 1, "data\\graphics\\textures\\gui\\mainmenu\\sub_hi.png")
+	XGUIEng.SetMaterialColor("DiplomacyWindowResDropdown_Scrollable", 1, 255, 255, 255, 255)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowResDropdown_Scrollable", 2, 0, 0, 1, 1)
+	XGUIEng.SetMaterialTexture("DiplomacyWindowResDropdown_Scrollable", 2, "data\\graphics\\textures\\gui\\mainmenu\\sub_sel.png")
+	XGUIEng.SetMaterialColor("DiplomacyWindowResDropdown_Scrollable", 2, 255, 255, 255, 255)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowResDropdown_Scrollable", 3, 0, 0, 1, 1)
+	XGUIEng.SetMaterialTexture("DiplomacyWindowResDropdown_Scrollable", 3, "data\\graphics\\textures\\gui\\mainmenu\\sub_in.png")
+	XGUIEng.SetMaterialColor("DiplomacyWindowResDropdown_Scrollable", 3, 255, 255, 255, 255)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowResDropdown_Scrollable", 4, 0, 0, 1, 1)
+	XGUIEng.SetMaterialTexture("DiplomacyWindowResDropdown_Scrollable", 4, "data\\graphics\\textures\\gui\\mainmenu\\sub_akt.png")
+	XGUIEng.SetMaterialColor("DiplomacyWindowResDropdown_Scrollable", 4, 255, 255, 255, 255)
+	CppLogic.UI.WidgetSetFont("DiplomacyWindowResDropdown_Scrollable", "data\\menu\\fonts\\medium11bold.met")
+	CppLogic.UI.WidgetSetStringFrameDistance("DiplomacyWindowResDropdown_Scrollable", 3)
+	XGUIEng.SetText("DiplomacyWindowResDropdown_Scrollable", "", 1)
+	XGUIEng.SetTextColor("DiplomacyWindowResDropdown_Scrollable", 255, 255, 255, 255)
+	CppLogic.UI.TextButtonSetCenterText("DiplomacyWindowResDropdown_Scrollable", true)
+	CppLogic.UI.WidgetSetUpdateManualFlag("DiplomacyWindowResDropdown_Scrollable", false)
+	CppLogic.UI.WidgetOverrideUpdateFunc("DiplomacyWindowResDropdown_Scrollable", function() AdvancedUI.GUIUpdate_DiplomacySelectResType() end)
+	CppLogic.UI.ContainerWidgetCreateCustomWidgetChild("DiplomacyWindowResDropdown", "DiplomacyWindowResDropdown_Scroll", "CppLogic::Mod::UI::AutoScrollCustomWidget", nil, 1, 0, 0,
+		0, 0, 0, "", "DiplomacyWindowResDropdown_Scrollable")
+	CppLogic.UI.WidgetSetPositionAndSize("DiplomacyWindowResDropdown_Scroll", 0, 0, 160, 100)
+	XGUIEng.ShowWidget("DiplomacyWindowResDropdown_Scroll", 1)
+	CppLogic.UI.WidgetSetBaseData("DiplomacyWindowResDropdown_Scroll", 0, false, false)
+	CppLogic.UI.ContainerWidgetCreateStaticWidgetChild("DiplomacyWindowResDropdown", "DiplomacyWindowResDropdown_DropBG", nil)
+	CppLogic.UI.WidgetSetPositionAndSize("DiplomacyWindowResDropdown_DropBG", 0, 0, 160, 100)
+	XGUIEng.ShowWidget("DiplomacyWindowResDropdown_DropBG", 1)
+	CppLogic.UI.WidgetSetBaseData("DiplomacyWindowResDropdown_DropBG", 0, true, false)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowResDropdown_DropBG", 0, 0, 0, 1, 1)
+	XGUIEng.SetMaterialColor("DiplomacyWindowResDropdown_DropBG", 0, 0, 0, 0, 255)
 	CppLogic.UI.ContainerWidgetCreateContainerWidgetChild("DiplomacyWindow", "DiplomacyWindowPlayers", "DiplomacyStatusFriendly")
 	CppLogic.UI.WidgetSetPositionAndSize("DiplomacyWindowPlayers", 0, 0, 900, 414)
 	XGUIEng.ShowWidget("DiplomacyWindowPlayers", 1)
@@ -1289,7 +1372,7 @@ function AdvancedUI.InitUI()
 	CppLogic.UI.WidgetSetUpdateManualFlag("DiplomacyWindowPlayerSelect", false)
 	CppLogic.UI.WidgetOverrideUpdateFunc("DiplomacyWindowPlayerSelect", function() AdvancedUI.GUIUpdate_SelectPlayer() end)
 	CppLogic.UI.ContainerWidgetCreateCustomWidgetChild("DiplomacyWindowPlayer", "DiplomacyWindowPlayerMPResourceAmount", "CppLogic::Mod::UI::TextInputCustomWidget", nil, 4, 0, 0, 0,
-													   -1073741824, 100, "", "")
+		-1073741824, 100, "", "")
 	CppLogic.UI.WidgetSetPositionAndSize("DiplomacyWindowPlayerMPResourceAmount", 610, 5, 120, 31)
 	XGUIEng.ShowWidget("DiplomacyWindowPlayerMPResourceAmount", 1)
 	CppLogic.UI.WidgetSetBaseData("DiplomacyWindowPlayerMPResourceAmount", 0, false, false)
@@ -1300,20 +1383,20 @@ function AdvancedUI.InitUI()
 	XGUIEng.DisableButton("DiplomacyWindowPlayerMPResourceName", 0)
 	XGUIEng.HighLightButton("DiplomacyWindowPlayerMPResourceName", 0)
 	CppLogic.UI.ButtonOverrideActionFunc("DiplomacyWindowPlayerMPResourceName", function() AdvancedUI.GUIAction_DiplomacyResType() end)
-	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerMPResourceName", 0, 0, 0, 1, 1)
-	XGUIEng.SetMaterialTexture("DiplomacyWindowPlayerMPResourceName", 0, "data\\graphics\\textures\\gui\\window_bg187x32.png")
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerMPResourceName", 0, 0, 0, 0.9420289855072463, 0.8723404255319149)
+	XGUIEng.SetMaterialTexture("DiplomacyWindowPlayerMPResourceName", 0, "data\\graphics\\textures\\gui\\mainmenu\\small_button.png")
 	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerMPResourceName", 0, 255, 255, 255, 255)
-	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerMPResourceName", 1, 0, 0, 1, 1)
-	XGUIEng.SetMaterialTexture("DiplomacyWindowPlayerMPResourceName", 1, "data\\graphics\\textures\\gui\\window_bg187x32.png")
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerMPResourceName", 1, 0, 0, 0.9420289855072463, 0.8723404255319149)
+	XGUIEng.SetMaterialTexture("DiplomacyWindowPlayerMPResourceName", 1, "data\\graphics\\textures\\gui\\mainmenu\\small_button_hi.png")
 	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerMPResourceName", 1, 255, 255, 255, 255)
-	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerMPResourceName", 2, 0, 0, 1, 1)
-	XGUIEng.SetMaterialTexture("DiplomacyWindowPlayerMPResourceName", 2, "data\\graphics\\textures\\gui\\window_bg187x32.png")
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerMPResourceName", 2, 0, 0, 0.9420289855072463, 0.8723404255319149)
+	XGUIEng.SetMaterialTexture("DiplomacyWindowPlayerMPResourceName", 2, "data\\graphics\\textures\\gui\\mainmenu\\small_button_sel.png")
 	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerMPResourceName", 2, 255, 255, 255, 255)
-	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerMPResourceName", 3, 0, 0, 1, 1)
-	XGUIEng.SetMaterialTexture("DiplomacyWindowPlayerMPResourceName", 3, "data\\graphics\\textures\\gui\\window_bg187x32.png")
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerMPResourceName", 3, 0, 0, 0.9420289855072463, 0.8723404255319149)
+	XGUIEng.SetMaterialTexture("DiplomacyWindowPlayerMPResourceName", 3, "data\\graphics\\textures\\gui\\mainmenu\\small_button_in.png")
 	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerMPResourceName", 3, 255, 255, 255, 255)
-	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerMPResourceName", 4, 0, 0, 1, 1)
-	XGUIEng.SetMaterialTexture("DiplomacyWindowPlayerMPResourceName", 4, "data\\graphics\\textures\\gui\\window_bg187x32.png")
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerMPResourceName", 4, 0, 0, 0.9420289855072463, 0.8723404255319149)
+	XGUIEng.SetMaterialTexture("DiplomacyWindowPlayerMPResourceName", 4, "data\\graphics\\textures\\gui\\mainmenu\\small_button_akt.png")
 	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerMPResourceName", 4, 255, 255, 255, 255)
 	CppLogic.UI.WidgetSetFont("DiplomacyWindowPlayerMPResourceName", "data\\menu\\fonts\\medium11bold.met")
 	CppLogic.UI.WidgetSetStringFrameDistance("DiplomacyWindowPlayerMPResourceName", 6)
@@ -1364,7 +1447,7 @@ function AdvancedUI.InitUI()
 	XGUIEng.SetMaterialTexture("DiplomacyWindowPlayerOpponentState", 0, "graphics\\textures\\gui\\window_status_hostile.png")
 	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerOpponentState", 0, 255, 255, 255, 255)
 	CppLogic.UI.ContainerWidgetCreateCustomWidgetChild("DiplomacyWindowPlayers", "DiplomacyWindowScroll", "CppLogic::Mod::UI::AutoScrollCustomWidget", nil, 0, 0, 0, 0, 0, 0, "",
-													   "DiplomacyWindowPlayer")
+		"DiplomacyWindowPlayer")
 	CppLogic.UI.WidgetSetPositionAndSize("DiplomacyWindowScroll", 0, 0, 900, 414)
 	XGUIEng.ShowWidget("DiplomacyWindowScroll", 1)
 	CppLogic.UI.WidgetSetBaseData("DiplomacyWindowScroll", 0, false, false)
@@ -1394,6 +1477,7 @@ function AdvancedUI.InitUI()
 	XGUIEng.SetMaterialColor("DiplomacyWindowFoW", 10, 255, 255, 255, 0)
 	CppLogic.UI.WidgetSetUpdateManualFlag("DiplomacyWindowFoW", false)
 	CppLogic.UI.WidgetOverrideUpdateFunc("DiplomacyWindowFoW", function() AdvancedUI.GUIUpdate_UpdateFoW() end)
+	CppLogic.UI.WidgetSetTooltipData("DiplomacyWindowResDropdown_Scrollable", nil, false, false)
 	CppLogic.UI.WidgetSetTooltipData("DiplomacyWindowPlayerSetAlly", nil, false, true)
 	CppLogic.UI.WidgetSetTooltipData("DiplomacyWindowPlayerSetNeutral", nil, false, true)
 	CppLogic.UI.WidgetSetTooltipData("DiplomacyWindowPlayerSetHostile", nil, false, true)
@@ -1406,8 +1490,10 @@ function AdvancedUI.InitUI()
 
 	AdvancedUI.DoSaveScroll:Setup()
 	AdvancedUI.LoadSaveScroll:Setup()
-	AdvancedUI.MultiselectionScroll:Init()
+	AdvancedUI.MultiselectionScroll:Setup()
 	AdvancedUI.DiplomacyPlayerScroll:Setup()
+	AdvancedUI.DiplomacyResDropdown:Setup()
+	AdvancedUI.DiplomacyResDropdown:SetupDropdownWidgets("DiplomacyWindowResDropdown", "DiplomacyWindowResDropdown_DropBG")
 
 	AdvancedUI.InitMarketUI()
 
