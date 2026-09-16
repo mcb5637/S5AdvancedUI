@@ -186,17 +186,17 @@
       <ForceToHandleMouseEventsFlag>True</ForceToHandleMouseEventsFlag>
       <ForceToNeverBeFoundFlag>False</ForceToNeverBeFoundFlag>
       <BackgroundMaterial>
-        <Texture></Texture>
+        <Texture>data\graphics\textures\gui\bg_windowcomplete.png</Texture>
         <TextureCoordinates>
-          <X>0</X>
-          <Y>0</Y>
-          <W>1</W>
-          <H>1</H>
+          <X>0.75</X>
+          <Y>0.4000000059604645</Y>
+          <W>0.15000000596046448</W>
+          <H>0.4000000059604645</H>
         </TextureCoordinates>
         <Color>
-          <Red>0</Red>
-          <Green>0</Green>
-          <Blue>0</Blue>
+          <Red>255</Red>
+          <Green>255</Green>
+          <Blue>255</Blue>
           <Alpha>255</Alpha>
         </Color>
       </BackgroundMaterial>
