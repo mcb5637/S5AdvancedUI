@@ -249,6 +249,138 @@
           <ForceToHandleMouseEventsFlag>False</ForceToHandleMouseEventsFlag>
           <ForceToNeverBeFoundFlag>False</ForceToNeverBeFoundFlag>
           <SubWidgets>
+            <WidgetList classname="EGUIX::CGfxButtonWidget" classid="0x56dda656">
+              <Name>DiplomacyWindowPlayerColorChange</Name>
+              <Rectangle>
+                <X>304</X>
+                <Y>5</Y>
+                <W>32</W>
+                <H>32</H>
+              </Rectangle>
+              <IsShown>True</IsShown>
+              <ZPriority>0</ZPriority>
+              <MotherID>DiplomacyWindowPlayer</MotherID>
+              <Group></Group>
+              <ForceToHandleMouseEventsFlag>False</ForceToHandleMouseEventsFlag>
+              <ForceToNeverBeFoundFlag>False</ForceToNeverBeFoundFlag>
+              <ButtonHelper>
+                <DisabledFlag>false</DisabledFlag>
+                <HighLightedFlag>false</HighLightedFlag>
+                <ActionFunction>
+                  <LuaCommand>AdvancedUI.GUIAction_ColorChange()</LuaCommand>
+                </ActionFunction>
+                <ShortCutString>
+                  <StringTableKey></StringTableKey>
+                  <RawString></RawString>
+                </ShortCutString>
+              </ButtonHelper>
+              <Materials>
+                <Texture></Texture>
+                <TextureCoordinates>
+                  <X>0</X>
+                  <Y>0</Y>
+                  <W>1</W>
+                  <H>1</H>
+                </TextureCoordinates>
+                <Color>
+                  <Red>255</Red>
+                  <Green>255</Green>
+                  <Blue>255</Blue>
+                  <Alpha>0</Alpha>
+                </Color>
+              </Materials>
+              <Materials>
+                <Texture></Texture>
+                <TextureCoordinates>
+                  <X>0</X>
+                  <Y>0</Y>
+                  <W>1</W>
+                  <H>1</H>
+                </TextureCoordinates>
+                <Color>
+                  <Red>202</Red>
+                  <Green>202</Green>
+                  <Blue>202</Blue>
+                  <Alpha>86</Alpha>
+                </Color>
+              </Materials>
+              <Materials>
+                <Texture></Texture>
+                <TextureCoordinates>
+                  <X>0</X>
+                  <Y>0</Y>
+                  <W>1</W>
+                  <H>1</H>
+                </TextureCoordinates>
+                <Color>
+                  <Red>100</Red>
+                  <Green>100</Green>
+                  <Blue>100</Blue>
+                  <Alpha>100</Alpha>
+                </Color>
+              </Materials>
+              <Materials>
+                <Texture></Texture>
+                <TextureCoordinates>
+                  <X>0</X>
+                  <Y>0</Y>
+                  <W>1</W>
+                  <H>1</H>
+                </TextureCoordinates>
+                <Color>
+                  <Red>155</Red>
+                  <Green>155</Green>
+                  <Blue>155</Blue>
+                  <Alpha>100</Alpha>
+                </Color>
+              </Materials>
+              <Materials>
+                <Texture></Texture>
+                <TextureCoordinates>
+                  <X>0</X>
+                  <Y>0</Y>
+                  <W>1</W>
+                  <H>1</H>
+                </TextureCoordinates>
+                <Color>
+                  <Red>155</Red>
+                  <Green>155</Green>
+                  <Blue>155</Blue>
+                  <Alpha>100</Alpha>
+                </Color>
+              </Materials>
+              <ToolTipHelper>
+                <ToolTipEnabledFlag>False</ToolTipEnabledFlag>
+                <ToolTipString>
+                  <StringTableKey></StringTableKey>
+                  <RawString></RawString>
+                </ToolTipString>
+                <TargetWidget></TargetWidget>
+                <ControlTargetWidgetDisplayState>False</ControlTargetWidgetDisplayState>
+                <UpdateFunction>
+                  <LuaCommand></LuaCommand>
+                </UpdateFunction>
+              </ToolTipHelper>
+              <IconMaterial>
+                <Texture></Texture>
+                <TextureCoordinates>
+                  <X>0</X>
+                  <Y>0</Y>
+                  <W>1</W>
+                  <H>1</H>
+                </TextureCoordinates>
+                <Color>
+                  <Red>255</Red>
+                  <Green>255</Green>
+                  <Blue>255</Blue>
+                  <Alpha>0</Alpha>
+                </Color>
+              </IconMaterial>
+              <UpdateFunction>
+                <LuaCommand></LuaCommand>
+              </UpdateFunction>
+              <UpdateManualFlag>true</UpdateManualFlag>
+            </WidgetList>
             <WidgetList classname="EGUIX::CStaticWidget" classid="0x213a8776">
               <Name>DiplomacyWindowPlayerColorFrame</Name>
               <Rectangle>
@@ -1153,7 +1285,7 @@
               <UpdateManualFlag>true</UpdateManualFlag>
             </WidgetList>
             <WidgetList classname="EGUIX::CStaticWidget" classid="0x213a8776">
-              <Name>DiplomacyWindowPlayerColor</Name>
+              <Name>DiplomacyWindowPlayerColorRender</Name>
               <Rectangle>
                 <X>304</X>
                 <Y>5</Y>

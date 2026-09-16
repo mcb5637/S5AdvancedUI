@@ -516,8 +516,7 @@ end
 AdvancedUI.WidgetIdCache = {}
 ---@param containerwid number
 ---@param name string
----@param extra nil|fun(n:string):boolean
-function AdvancedUI.GetWidgetId(containerwid, name, extra)
+function AdvancedUI.GetWidgetId(containerwid, name)
 	local c = AdvancedUI.WidgetIdCache[containerwid]
 	if not c then
 		c = {}
@@ -526,14 +525,9 @@ function AdvancedUI.GetWidgetId(containerwid, name, extra)
 	if c[name] then
 		return c[name]
 	end
-	if not extra then
-		extra = function(_)
-			return true
-		end
-	end
 	for _, id in CppLogic.UI.ContainerWidgetGetAllChildren(containerwid) do
 		local n = CppLogic.UI.GetWidgetName(id)
-		if string.find(n, name, nil, true) and extra(n) then
+		if string.find(n, name, nil, true) then
 			c[name] = id
 			return id
 		end
@@ -558,12 +552,11 @@ function AdvancedUI.GUIUpdate_DiplomacyPlayerName()
 	local container = XGUIEng.GetWidgetsMotherID(XGUIEng.GetCurrentWidgetID())
 
 	local diplowid = AdvancedUI.GetWidgetId(container, "OpponentState")
-	local colorwid = AdvancedUI.GetWidgetId(container, "Color", function(n)
-		return not string.find(n, "ColorFrame", nil, true)
-	end)
+	local colorwid = AdvancedUI.GetWidgetId(container, "ColorRender")
 	local resconfwid = AdvancedUI.GetWidgetId(container, "ResourceSend")
 	local resamountwid = AdvancedUI.GetWidgetId(container, "ResourceAmount")
 	local restypewid = AdvancedUI.GetWidgetId(container, "ResourceName")
+	local colorChangeWid = AdvancedUI.GetWidgetId(container, "ColorChange")
 
 	local diplo = Logic.GetDiplomacyState(sel, GUI.GetPlayerID())
 	if sel == GUI.GetPlayerID() then
@@ -591,6 +584,8 @@ function AdvancedUI.GUIUpdate_DiplomacyPlayerName()
 		XGUIEng.ShowWidget(resamountwid, 1)
 		XGUIEng.ShowWidget(resconfwid, 1)
 	end
+
+	XGUIEng.ShowWidget(colorChangeWid, AdvancedUI.ShowColorChange(sel) and 1 or 0)
 
 	XGUIEng.ShowWidget(AdvancedUI.GetWidgetId(container, "PlayerSelect"), AdvancedUI.ShowPlayerSelect(sel) and 1 or 0)
 	XGUIEng.ShowWidget("DiplomacyWindowFoW", AdvancedUI.ShowPlayerSelect(0) and 1 or 0)
@@ -709,6 +704,8 @@ function AdvancedUI.GUIAction_DiploSendRes()
 	CppLogic.UI.Commands.Player_DonateResources(sel, rt, num)
 end
 
+---@param pid number
+---@return boolean
 ---@diagnostic disable-next-line: duplicate-set-field
 function AdvancedUI.ShowPlayerSelect(pid)
 	return false
@@ -728,6 +725,27 @@ end
 
 ---@diagnostic disable-next-line: duplicate-set-field
 function AdvancedUI.GUIAction_ToggleFoW()
+end
+
+function AdvancedUI.GUIAction_ColorChange()
+	---@type number?
+	local sel = AdvancedUI.DiplomacyPlayerScroll:GetElementOf(XGUIEng.GetCurrentWidgetID(), 1)
+	if not sel then
+		return
+	end
+	AdvancedUI.DoColorChange(sel)
+end
+
+---@param pid number
+---@diagnostic disable-next-line: duplicate-set-field
+function AdvancedUI.DoColorChange(pid)
+end
+
+---@param pid number
+---@return boolean
+---@diagnostic disable-next-line: duplicate-set-field
+function AdvancedUI.ShowColorChange(pid)
+	return false
 end
 
 function AdvancedUI.Init()
@@ -1211,6 +1229,7 @@ function AdvancedUI.InitUI()
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayers") == 0, "DiplomacyWindowPlayers already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowSelectors") == 0, "DiplomacyWindowSelectors already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayer") == 0, "DiplomacyWindowPlayer already exists")
+	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayerColorChange") == 0, "DiplomacyWindowPlayerColorChange already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayerColorFrame") == 0, "DiplomacyWindowPlayerColorFrame already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayerName") == 0, "DiplomacyWindowPlayerName already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayerSetAlly") == 0, "DiplomacyWindowPlayerSetAlly already exists")
@@ -1220,7 +1239,7 @@ function AdvancedUI.InitUI()
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayerMPResourceAmount") == 0, "DiplomacyWindowPlayerMPResourceAmount already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayerMPResourceName") == 0, "DiplomacyWindowPlayerMPResourceName already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayerMPResourceSend") == 0, "DiplomacyWindowPlayerMPResourceSend already exists")
-	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayerColor") == 0, "DiplomacyWindowPlayerColor already exists")
+	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayerColorRender") == 0, "DiplomacyWindowPlayerColorRender already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowPlayerOpponentState") == 0, "DiplomacyWindowPlayerOpponentState already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowScroll") == 0, "DiplomacyWindowScroll already exists")
 	assert(XGUIEng.GetWidgetID("DiplomacyWindowFoW") == 0, "DiplomacyWindowFoW already exists")
@@ -1281,6 +1300,26 @@ function AdvancedUI.InitUI()
 	CppLogic.UI.WidgetSetPositionAndSize("DiplomacyWindowPlayer", 0, 0, 785, 42)
 	XGUIEng.ShowWidget("DiplomacyWindowPlayer", 1)
 	CppLogic.UI.WidgetSetBaseData("DiplomacyWindowPlayer", 0, false, false)
+	CppLogic.UI.ContainerWidgetCreateGFXButtonWidgetChild("DiplomacyWindowPlayer", "DiplomacyWindowPlayerColorChange", nil)
+	CppLogic.UI.WidgetSetPositionAndSize("DiplomacyWindowPlayerColorChange", 304, 5, 32, 32)
+	XGUIEng.ShowWidget("DiplomacyWindowPlayerColorChange", 1)
+	CppLogic.UI.WidgetSetBaseData("DiplomacyWindowPlayerColorChange", 0, false, false)
+	XGUIEng.DisableButton("DiplomacyWindowPlayerColorChange", 0)
+	XGUIEng.HighLightButton("DiplomacyWindowPlayerColorChange", 0)
+	CppLogic.UI.ButtonOverrideActionFunc("DiplomacyWindowPlayerColorChange", function() AdvancedUI.GUIAction_ColorChange() end)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerColorChange", 0, 0, 0, 1, 1)
+	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerColorChange", 0, 255, 255, 255, 0)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerColorChange", 1, 0, 0, 1, 1)
+	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerColorChange", 1, 202, 202, 202, 86)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerColorChange", 2, 0, 0, 1, 1)
+	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerColorChange", 2, 100, 100, 100, 100)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerColorChange", 3, 0, 0, 1, 1)
+	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerColorChange", 3, 155, 155, 155, 100)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerColorChange", 4, 0, 0, 1, 1)
+	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerColorChange", 4, 155, 155, 155, 100)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerColorChange", 10, 0, 0, 1, 1)
+	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerColorChange", 10, 255, 255, 255, 0)
+	CppLogic.UI.WidgetSetUpdateManualFlag("DiplomacyWindowPlayerColorChange", true)
 	CppLogic.UI.ContainerWidgetCreateStaticWidgetChild("DiplomacyWindowPlayer", "DiplomacyWindowPlayerColorFrame", nil)
 	CppLogic.UI.WidgetSetPositionAndSize("DiplomacyWindowPlayerColorFrame", 304, 5, 32, 32)
 	XGUIEng.ShowWidget("DiplomacyWindowPlayerColorFrame", 1)
@@ -1448,12 +1487,12 @@ function AdvancedUI.InitUI()
 	XGUIEng.SetTextColor("DiplomacyWindowPlayerMPResourceSend", 0, 0, 0, 255)
 	CppLogic.UI.TextButtonSetCenterText("DiplomacyWindowPlayerMPResourceSend", true)
 	CppLogic.UI.WidgetSetUpdateManualFlag("DiplomacyWindowPlayerMPResourceSend", true)
-	CppLogic.UI.ContainerWidgetCreateStaticWidgetChild("DiplomacyWindowPlayer", "DiplomacyWindowPlayerColor", nil)
-	CppLogic.UI.WidgetSetPositionAndSize("DiplomacyWindowPlayerColor", 304, 5, 32, 32)
-	XGUIEng.ShowWidget("DiplomacyWindowPlayerColor", 1)
-	CppLogic.UI.WidgetSetBaseData("DiplomacyWindowPlayerColor", 0, false, false)
-	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerColor", 0, 0, 0, 1, 1)
-	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerColor", 0, 81, 85, 255, 255)
+	CppLogic.UI.ContainerWidgetCreateStaticWidgetChild("DiplomacyWindowPlayer", "DiplomacyWindowPlayerColorRender", nil)
+	CppLogic.UI.WidgetSetPositionAndSize("DiplomacyWindowPlayerColorRender", 304, 5, 32, 32)
+	XGUIEng.ShowWidget("DiplomacyWindowPlayerColorRender", 1)
+	CppLogic.UI.WidgetSetBaseData("DiplomacyWindowPlayerColorRender", 0, false, false)
+	CppLogic.UI.WidgetMaterialSetTextureCoordinates("DiplomacyWindowPlayerColorRender", 0, 0, 0, 1, 1)
+	XGUIEng.SetMaterialColor("DiplomacyWindowPlayerColorRender", 0, 81, 85, 255, 255)
 	CppLogic.UI.ContainerWidgetCreateStaticWidgetChild("DiplomacyWindowPlayer", "DiplomacyWindowPlayerOpponentState", nil)
 	CppLogic.UI.WidgetSetPositionAndSize("DiplomacyWindowPlayerOpponentState", 267, 5, 32, 32)
 	XGUIEng.ShowWidget("DiplomacyWindowPlayerOpponentState", 1)
@@ -1493,6 +1532,7 @@ function AdvancedUI.InitUI()
 	CppLogic.UI.WidgetSetUpdateManualFlag("DiplomacyWindowFoW", false)
 	CppLogic.UI.WidgetOverrideUpdateFunc("DiplomacyWindowFoW", function() AdvancedUI.GUIUpdate_UpdateFoW() end)
 	CppLogic.UI.WidgetSetTooltipData("DiplomacyWindowResDropdown_Scrollable", nil, false, false)
+	CppLogic.UI.WidgetSetTooltipData("DiplomacyWindowPlayerColorChange", nil, false, false)
 	CppLogic.UI.WidgetSetTooltipData("DiplomacyWindowPlayerSetAlly", nil, false, true)
 	CppLogic.UI.WidgetSetTooltipData("DiplomacyWindowPlayerSetNeutral", nil, false, true)
 	CppLogic.UI.WidgetSetTooltipData("DiplomacyWindowPlayerSetHostile", nil, false, true)
