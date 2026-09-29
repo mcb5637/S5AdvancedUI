@@ -91,6 +91,7 @@ function AdvancedUI.DoSaveGame()
 		GUI.AddNote(XGUIEng.GetStringTableText("InGameMessages/GUI_GameSaved"))
 		if isEMS then
 			EMS.GL.ToggleMainMenu()
+			AdvancedUI.InitSave()
 		else
 			GUIAction_ToggleMenu(XGUIEng.GetWidgetID("MainMenuWindow"), 0)
 		end
@@ -110,6 +111,7 @@ function AdvancedUI.DoSaveGame()
 										   Framework.SaveGame(MainWindow_SaveGame_SaveGameName, MainWindow_SaveGame_SaveGameDescNew)
 									   end
 									   GUI.AddNote(XGUIEng.GetStringTableText("InGameMessages/GUI_GameSaved"))
+									   AdvancedUI.InitSave()
 								   end,
 								   function()
 									   EMS.GL.ShowPage("MainMenuSaveWindow")
