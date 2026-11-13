@@ -90,8 +90,8 @@ function AdvancedUI.DoSaveGame()
 		end
 		GUI.AddNote(XGUIEng.GetStringTableText("InGameMessages/GUI_GameSaved"))
 		if isEMS then
+			EMS.GL.ShowPage("", 0)
 			EMS.GL.ToggleMainMenu()
-			AdvancedUI.InitSave()
 		else
 			GUIAction_ToggleMenu(XGUIEng.GetWidgetID("MainMenuWindow"), 0)
 		end
@@ -111,7 +111,6 @@ function AdvancedUI.DoSaveGame()
 										   Framework.SaveGame(MainWindow_SaveGame_SaveGameName, MainWindow_SaveGame_SaveGameDescNew)
 									   end
 									   GUI.AddNote(XGUIEng.GetStringTableText("InGameMessages/GUI_GameSaved"))
-									   AdvancedUI.InitSave()
 								   end,
 								   function()
 									   EMS.GL.ShowPage("MainMenuSaveWindow")
@@ -505,6 +504,9 @@ function AdvancedUI.GUIUpdate_MinimapInDiplomacyMenu()
 end
 
 function AdvancedUI.InitDiplomacyWindow()
+	if XGUIEng.IsWidgetExisting("DiplomacyWindowScroll") == 0 then
+		return
+	end
 	local pids = {}
 	for i = 1, Logic.GetMaximumNumberOfPlayer() do
 		if CppLogic.Logic.GetPlayerName(i) ~= "" or i == GUI.GetPlayerID() then
