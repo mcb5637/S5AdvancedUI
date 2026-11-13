@@ -27,3 +27,11 @@ function ModLoader.AdvancedUI.Init(mp)
 	--- merge own manifest into the main mods one
 	ModLoader.MergeManifest(ModLoader.Manifest, ModLoader.AdvancedUI.Manifest)
 end
+
+for _,e in ipairs{"SetPlayerName", "SetPlayerRawName"} do
+	local orig = Logic[e]
+	Logic[e] = function(p, n)
+		orig(p, n)
+		AdvancedUI.InitDiplomacyWindow()
+	end
+end
